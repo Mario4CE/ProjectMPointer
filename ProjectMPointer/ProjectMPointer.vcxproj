@@ -118,9 +118,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Dump_Folder.cpp" />
+    <ClCompile Include="Listen_Port.cpp" />
+    <ClCompile Include="MemoryManager.cpp" />
     <ClCompile Include="MyForm.cpp" />
+    <ClCompile Include="Size_MB.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Class.h" />
     <ClInclude Include="MyForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>
