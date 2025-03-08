@@ -1,0 +1,9 @@
+namespace ProjectMPointer
+{
+    [default_interface]
+    runtimeclass servidor : Windows.UI.Xaml.Controls.Page
+    {
+        servidor();
+        Int32 MyProperty;
+    }
+}
