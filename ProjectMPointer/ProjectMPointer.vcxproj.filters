@@ -39,4 +39,13 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Page Include="servidor.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="servergrpc.proto">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>
