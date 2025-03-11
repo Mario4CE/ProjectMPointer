@@ -121,8 +121,8 @@
   <ItemGroup>
     <ClCompile Include="Dump_Folder.cpp" />
     <ClCompile Include="Listen_Port.cpp" />
-    <ClCompile Include="MemoryManager.cpp" />
-    <ClCompile Include="MyForm.cpp" />
+    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Size_MB.cpp" />
   </ItemGroup>
   <ItemGroup>
