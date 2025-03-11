@@ -3,11 +3,14 @@
 using namespace System;
 using namespace System::Windows::Forms;
 
-int main(int arg, char* argv[]) {
-    Application::EnableVisualStyles();
-    Application::SetCompatibleTextRenderingDefault(false);
+[STAThread] // Atributo necesario para aplicaciones de Windows Forms
+int main(array<String^>^ args) {
+    Application::EnableVisualStyles(); // Habilita estilos visuales
+    Application::SetCompatibleTextRenderingDefault(false); // Configura el renderizado de texto
+
+    // Crear una instancia del formulario principal y ejecutar la aplicación
     ProjectMPointer::MyForm form;
     Application::Run(% form);
-    RunServer();
+
     return 0;
 }
