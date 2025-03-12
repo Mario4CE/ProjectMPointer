@@ -1,16 +1,29 @@
-#include "MyForm.h"
+#include "server.h"
+#include "interfaz.h"
+#include <thread> // Incluye la biblioteca de hilos
 
 using namespace System;
 using namespace System::Windows::Forms;
 
-[STAThread] // Atributo necesario para aplicaciones de Windows Forms
-int main(array<String^>^ args) {
-    Application::EnableVisualStyles(); // Habilita estilos visuales
-    Application::SetCompatibleTextRenderingDefault(false); // Configura el renderizado de texto
+[STAThreadAttribute]
+int main(array<System::String^>^ args)
+{
+    // Iniciar el servidor en un hilo separado
+    std::thread serverThread([]() {
+        int resultado = startServer();
+        if (resultado != 0) {
+            std::cerr << "El servidor no pudo iniciarse correctamente." << std::endl;
+        }
+        });
 
-    // Crear una instancia del formulario principal y ejecutar la aplicación
-    ProjectMPointer::MyForm form;
-    Application::Run(% form);
+    // Iniciar la interfaz gráfica en el hilo principal
+    Application::EnableVisualStyles();
+    Application::SetCompatibleTextRenderingDefault(false);
+    InterfazCLI::FormularioPrincipal formulario;
+    Application::Run(% formulario);
+
+    // Esperar a que el hilo del servidor termine (opcional)
+    serverThread.join();
 
     return 0;
 }
