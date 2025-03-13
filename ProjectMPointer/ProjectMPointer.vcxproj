@@ -120,7 +120,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="interfaz.cpp" />
+    <ClCompile Include="DumFolder.cpp" />
+    <ClCompile Include="ordenes.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -129,6 +130,7 @@
     <ClInclude Include="interfaz.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="ordenes.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
