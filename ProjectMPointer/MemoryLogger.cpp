@@ -24,7 +24,7 @@ void MemoryLogger::logRequest(const std::string& request) {
         logFile.close();
     }
     else {
-        std::cerr << "Error: No se pudo abrir el archivo de logs." << std::endl;
+        std::cerr << "Error: No se pudo abrir el archivo de logs.\n" << std::endl;
     }
 }
 

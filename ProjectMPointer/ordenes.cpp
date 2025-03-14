@@ -19,11 +19,10 @@ void handleClient(SOCKET clientSocket) {
         std::string request(buffer, bytesReceived);
         std::cout << "Petición recibida: " << request << std::endl;
 
-        // Procesar la petición y modificar la memoria
-        MemoryManager::processRequest(request);
+        // Procesar la petición
+        std::string response = MemoryManager::processRequest(request);
 
-        // Enviar una respuesta al cliente
-        std::string response = "Petición procesada: " + request;
+        // Enviar la respuesta al cliente
         send(clientSocket, response.c_str(), response.length(), 0);
     }
 
