@@ -81,7 +81,8 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies />
+      <AdditionalDependencies>
+      </AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -119,31 +120,29 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Dump_Folder.cpp" />
-    <ClCompile Include="Listen_Port.cpp" />
-    <ClCompile Include="MemoryManager.cpp" />
-    <ClCompile Include="MyForm.cpp" />
-    <ClCompile Include="Size_MB.cpp" />
+    <ClCompile Include="MemoryManeger.cpp" />
+    <ClCompile Include="MemoryLogger.cpp" />
+    <ClCompile Include="ordenes.cpp" />
+    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Class.h" />
-    <ClInclude Include="MyForm.h">
+    <ClInclude Include="interfaz.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="MemoryLogger.h" />
+    <ClInclude Include="MemoryManager.h" />
+    <ClInclude Include="ordenes.h" />
+    <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="MyForm.resx">
-      <DependentUpon>MyForm.h</DependentUpon>
+    <EmbeddedResource Include="interfaz.resx">
+      <DependentUpon>interfaz.h</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="servidor.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
-    <None Include="servergrpc.proto" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
