@@ -29,10 +29,12 @@ int main(array<System::String^>^ args)
         MemoryManager::processRequest("Asignar bloque 4 al proceso C");
         MemoryManager::processRequest("Liberar bloque 2");
         MemoryManager::processRequest("Asignar bloque 1 al proceso D");
+        std::cout << "Peticiones simuladas. Verifica la carpeta 'logs' para ver los archivos generados." << std::endl;
         });
 
     // Desacoplar el hilo de manejo de memoria
     memoryThread.detach();
+
 
     // Iniciar la interfaz gráfica en el hilo principal
     Application::EnableVisualStyles();
