@@ -1,5 +1,6 @@
 #include "ordenes.h"
 #include "Server.h"
+#include "MemoryManager.h"
 #include <iostream>
 #include <string>
 
@@ -14,10 +15,15 @@ void handleClient(SOCKET clientSocket) {
             break;
         }
 
-        std::string receivedData(buffer, bytesReceived);
-        std::cout << "Datos recibidos: " << receivedData << std::endl;
+        // Convertir el buffer recibido a un string
+        std::string request(buffer, bytesReceived);
+        std::cout << "Petición recibida: " << request << std::endl;
 
-        std::string response = "Servidor recibió: " + receivedData;
+        // Procesar la petición y modificar la memoria
+        MemoryManager::processRequest(request);
+
+        // Enviar una respuesta al cliente
+        std::string response = "Petición procesada: " + request;
         send(clientSocket, response.c_str(), response.length(), 0);
     }
 
