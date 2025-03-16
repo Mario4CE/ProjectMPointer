@@ -1,8 +1,11 @@
 #include "Server.h"
 #include "interfaz.h"
 #include "ordenes.h"
-#include "MemoryManager.h" 
+#include "MemoryManager.h"
+#include "ErrorLogger.h"
+#include "InfoLogger.h"
 #include <thread>
+#include <filesystem>
 #include <iostream>
 
 using namespace System;
@@ -10,7 +13,21 @@ using namespace System::Windows::Forms;
 
 [STAThreadAttribute]
 int main(array<System::String^>^ args)
+
 {
+    // Probar los loggers antes de iniciar el servidor y la interfaz
+    std::cout << "Probando los loggers..." << std::endl;
+
+    // Mensajes de prueba
+    std::string mensajeError = "Este es un mensaje de error de prueba desde el main.";
+    std::string mensajeInfo = "Este es un mensaje de información de prueba desde el main.";
+
+    // Registrar los mensajes en los loggers
+    ErrorLogger::logError(mensajeError);
+    InfoLogger::logInfo(mensajeInfo);
+
+    std::cout << "Loggers probados. Revisa la carpeta 'logs' para ver los archivos generados." << std::endl;
+
     // Iniciar el servidor en un hilo separado
     std::thread serverThread([]() {
         std::cout << "Iniciando el servidor..." << std::endl;
@@ -34,7 +51,6 @@ int main(array<System::String^>^ args)
 
     // Desacoplar el hilo de manejo de memoria
     memoryThread.detach();
-
 
     // Iniciar la interfaz gráfica en el hilo principal
     Application::EnableVisualStyles();
