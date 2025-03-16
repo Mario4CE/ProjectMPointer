@@ -1,20 +1,22 @@
 #include "ErrorLogger.h"
 #include <filesystem>
-#include <iostream> 
+#include <iostream>
 #include <sstream>
-#include <iomanip>
 
 namespace fs = std::filesystem;
 
 void ErrorLogger::logError(const std::string& message) {
+    // Mostrar el mensaje en la consola
+    std::cerr << "ERROR: " << message << std::endl;
+
     // Crear la carpeta "logs/errors" si no existe
     if (!fs::exists("logs/errors")) {
-        std::cout << "Creando carpeta 'logs/errors'..." << std::endl;
         if (!fs::create_directories("logs/errors")) {
             std::cerr << "Error: No se pudo crear la carpeta 'logs/errors'." << std::endl;
+            std::string mensajeError = "Error: No se pudo crear la carpeta 'logs/info'.";
+            ErrorLogger::logError(mensajeError);
             return;
         }
-        std::cout << "Carpeta 'logs/errors' creada correctamente." << std::endl;
     }
 
     // Abrir el archivo de errores en modo append
@@ -24,7 +26,8 @@ void ErrorLogger::logError(const std::string& message) {
         logFile.close();
     }
     else {
-        std::string mensajeError = "Este es un mensaje de error de prueba desde el main.";
+        std::cerr << "Error: No se pudo abrir el archivo de errores." << std::endl;
+        std::string mensajeError = "Error: No se pudo crear la carpeta 'logs/info'.";
         ErrorLogger::logError(mensajeError);
     }
 }
