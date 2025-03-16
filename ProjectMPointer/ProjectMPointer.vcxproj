@@ -120,6 +120,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ErrorLogger.cpp" />
+    <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="MemoryManeger.cpp" />
     <ClCompile Include="MemoryLogger.cpp" />
     <ClCompile Include="ordenes.cpp" />
@@ -128,6 +130,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Class.h" />
+    <ClInclude Include="ErrorLogger.h" />
+    <ClInclude Include="InfoLogger.h" />
     <ClInclude Include="interfaz.h">
       <FileType>CppForm</FileType>
     </ClInclude>
