@@ -26,8 +26,6 @@ int main(array<System::String^>^ args)
     ErrorLogger::logError(mensajeError);
     InfoLogger::logInfo(mensajeInfo);
 
-    std::cout << "Loggers probados. Revisa la carpeta 'logs' para ver los archivos generados." << std::endl;
-
     // Iniciar el servidor en un hilo separado
     std::thread serverThread([]() {
         std::cout << "Iniciando el servidor..." << std::endl;
@@ -46,7 +44,6 @@ int main(array<System::String^>^ args)
         MemoryManager::processRequest("Asignar bloque 4 al proceso C");
         MemoryManager::processRequest("Liberar bloque 2");
         MemoryManager::processRequest("Asignar bloque 1 al proceso D");
-        std::cout << "Peticiones simuladas. Verifica la carpeta 'logs' para ver los archivos generados." << std::endl;
         });
 
     // Desacoplar el hilo de manejo de memoria

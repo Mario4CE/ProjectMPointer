@@ -24,7 +24,8 @@ void ErrorLogger::logError(const std::string& message) {
         logFile.close();
     }
     else {
-        std::cerr << "Error: No se pudo abrir el archivo de errores." << std::endl; // Usa std::cerr
+        std::string mensajeError = "Este es un mensaje de error de prueba desde el main.";
+        ErrorLogger::logError(mensajeError);
     }
 }
 
