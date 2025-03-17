@@ -124,6 +124,7 @@
     <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryLogger.cpp" />
+    <ClCompile Include="Solicitudes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cliente.h">

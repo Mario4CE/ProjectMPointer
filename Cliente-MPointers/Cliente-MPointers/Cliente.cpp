@@ -2,7 +2,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <string>
-#include <msclr/marshal_cppstd.h> // Para convertir System::String^ a std::string
+#include <msclr/marshal_cppstd.h> 
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -52,15 +52,15 @@ namespace ClienteMPointers {
         }
 
         // Enviar la petición al servidor
-        if (send(clientSocket, peticion.c_str(), peticion.size(), 0) == SOCKET_ERROR) {
+        if (send(clientSocket, peticion.c_str(), static_cast<int>(peticion.size()), 0) == SOCKET_ERROR) {
             closesocket(clientSocket);
             WSACleanup();
             return "Error al enviar la petición al servidor.";
         }
 
         // Recibir la respuesta del servidor
-        char buffer[1024];
-        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+        char buffer[1024] = { 0 }; // Inicializar el buffer con ceros
+        int bytesReceived = recv(clientSocket, buffer, static_cast<int>(sizeof(buffer)), 0);
         if (bytesReceived <= 0) {
             closesocket(clientSocket);
             WSACleanup();

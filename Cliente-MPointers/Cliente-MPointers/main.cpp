@@ -4,12 +4,13 @@
 using namespace System;
 using namespace System::Windows::Forms;
 
-[STAThreadAttribute]
-void main(array<String^>^ args) {
+[STAThread]
+int main(array<System::String^>^ args) {
     Application::EnableVisualStyles();
     Application::SetCompatibleTextRenderingDefault(false);
     // Crear y ejecutar la ventana del cliente
     ClienteMPointers::Cliente form;
     Application::Run(% form);
+    return 0;
 }
 

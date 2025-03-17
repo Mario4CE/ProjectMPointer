@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace ClienteMPointers {
 
     using namespace System;
@@ -33,14 +35,16 @@ namespace ClienteMPointers {
         System::Windows::Forms::Button^ btnCliente;
         System::Windows::Forms::TextBox^ txtPeticion;
         System::Windows::Forms::Label^ lblRespuesta;
-    private: System::Windows::Forms::Label^ lblTitle;
-
+        System::Windows::Forms::Label^ lblTitle;
 
         // Contenedor de componentes
         System::ComponentModel::Container^ components;
 
         // Manejador de eventos para el clic del botón
         System::Void btnCliente_Click(System::Object^ sender, System::EventArgs^ e);
+
+        // Declaración de la función EnviarPeticion
+        std::string EnviarPeticion(const std::string& peticion); // Declaración correcta
 
 #pragma region Windows Form Designer generated code
         /// <summary>
