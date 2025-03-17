@@ -7,6 +7,8 @@
 #include <chrono>
 #include <fstream>
 
+namespace fs = std::filesystem;
+
 void InfoLogger::logInfo(const std::string& message) {
     // Mostrar el mensaje en la consola
     std::cout << "INFO: " << message << std::endl;

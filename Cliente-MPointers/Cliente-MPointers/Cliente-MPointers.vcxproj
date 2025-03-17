@@ -78,6 +78,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies />
@@ -123,6 +124,7 @@
     <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryLogger.cpp" />
+    <ClCompile Include="Solicitudes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cliente.h">
