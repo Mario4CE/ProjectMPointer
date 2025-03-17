@@ -1,4 +1,5 @@
 #include "InfoLogger.h"
+#include "ErrorLogger.h"
 #include <filesystem>
 #include <iostream> 
 #include <sstream>
@@ -7,10 +8,15 @@
 namespace fs = std::filesystem;
 
 void InfoLogger::logInfo(const std::string& message) {
+    // Mostrar el mensaje en la consola
+    std::cout << "INFO: " << message << std::endl;
+
     // Crear la carpeta "logs/info" si no existe
     if (!fs::exists("logs/info")) {
         if (!fs::create_directories("logs/info")) {
             std::cerr << "Error: No se pudo crear la carpeta 'logs/info'." << std::endl;
+            std::string mensajeError = "Error: No se pudo crear la carpeta 'logs/info'.";
+            ErrorLogger::logError(mensajeError);
             return;
         }
     }
@@ -22,7 +28,9 @@ void InfoLogger::logInfo(const std::string& message) {
         logFile.close();
     }
     else {
-        std::cerr << "Error: No se pudo abrir el archivo de información." << std::endl; // Usa std::cerr
+        std::cerr << "Error: No se pudo abrir el archivo de información." << std::endl;
+        std::string mensajeError = "Error: No se pudo crear la carpeta 'logs/info'.";
+        ErrorLogger::logError(mensajeError);
     }
 }
 

@@ -15,9 +15,6 @@ using namespace System::Windows::Forms;
 int main(array<System::String^>^ args)
 
 {
-    // Probar los loggers antes de iniciar el servidor y la interfaz
-    std::cout << "Probando los loggers..." << std::endl;
-
     // Mensajes de prueba
     std::string mensajeError = "Este es un mensaje de error de prueba desde el main.";
     std::string mensajeInfo = "Este es un mensaje de información de prueba desde el main.";
@@ -31,7 +28,7 @@ int main(array<System::String^>^ args)
         std::cout << "Iniciando el servidor..." << std::endl;
         int resultado = startServer();
         if (resultado != 0) {
-            std::cerr << "El servidor no pudo iniciarse correctamente." << std::endl;
+            std::cerr << "El servidor no pudo iniciarse correctamente." << std:: endl;
         }
         });
 
