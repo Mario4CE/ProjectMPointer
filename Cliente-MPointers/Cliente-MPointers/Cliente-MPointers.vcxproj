@@ -119,12 +119,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cliente.cpp" />
+    <ClCompile Include="ErrorLogger.cpp" />
+    <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MemoryLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cliente.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="ErrorLogger.h" />
+    <ClInclude Include="InfoLogger.h" />
+    <ClInclude Include="MemoryLogger.h" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Cliente.resx">
