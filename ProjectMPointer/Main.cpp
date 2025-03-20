@@ -7,27 +7,26 @@
 #include <thread>
 #include <filesystem>
 #include <iostream>
+#include "ActualizarRespuesta.h"
 
 using namespace System;
 using namespace System::Windows::Forms;
 
 [STAThreadAttribute]
 int main(array<System::String^>^ args)
-
 {
-    // Mensajes de prueba
-    std::string mensajeError = "Este es un mensaje de error de prueba desde el main.";
-    std::string mensajeInfo = "Este es un mensaje de información de prueba desde el main.";
+    Application::EnableVisualStyles();
+    Application::SetCompatibleTextRenderingDefault(false);
+    InterfazCLI::FormularioPrincipal formulario;
 
-    // Registrar los mensajes en los loggers
-    ErrorLogger::logError(mensajeError);
-    InfoLogger::logInfo(mensajeInfo);
+    InterfazCLI::Respuestas::SetFormulario(% formulario);
 
     // Iniciar el servidor en un hilo separado
     std::thread serverThread([]() {
         std::cout << "Iniciando el servidor..." << std::endl;
         int resultado = startServer();
         if (resultado != 0) {
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: El servidor no pudo iniciarse correctamente.");
             std::cerr << "El servidor no pudo iniciarse correctamente." << std:: endl;
         }
         });
@@ -35,21 +34,7 @@ int main(array<System::String^>^ args)
     // Desacoplar el hilo del servidor para que no bloquee la ejecución de la interfaz gráfica
     serverThread.detach();
 
-    // Simulación de peticiones que modifican la memoria (esto puede moverse al manejador de clientes)
-    std::thread memoryThread([]() {
-        // Simular algunas peticiones
-        MemoryManager::processRequest("Asignar bloque 4 al proceso C");
-        MemoryManager::processRequest("Liberar bloque 2");
-        MemoryManager::processRequest("Asignar bloque 1 al proceso D");
-        });
-
-    // Desacoplar el hilo de manejo de memoria
-    memoryThread.detach();
-
     // Iniciar la interfaz gráfica en el hilo principal
-    Application::EnableVisualStyles();
-    Application::SetCompatibleTextRenderingDefault(false);
-    InterfazCLI::FormularioPrincipal formulario;
     Application::Run(% formulario);
 
     return 0;

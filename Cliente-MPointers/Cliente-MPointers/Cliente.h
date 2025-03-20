@@ -75,9 +75,9 @@ namespace ClienteMPointers {
             // 
             this->txtPeticion->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
-            this->txtPeticion->Location = System::Drawing::Point(102, 87);
+            this->txtPeticion->Location = System::Drawing::Point(56, 86);
             this->txtPeticion->Name = L"txtPeticion";
-            this->txtPeticion->Size = System::Drawing::Size(200, 50);
+            this->txtPeticion->Size = System::Drawing::Size(290, 50);
             this->txtPeticion->TabIndex = 1;
             // 
             // lblRespuesta
@@ -90,6 +90,7 @@ namespace ClienteMPointers {
             this->lblRespuesta->Size = System::Drawing::Size(308, 164);
             this->lblRespuesta->TabIndex = 2;
             this->lblRespuesta->Text = L"Respuesta del servidor aparecerá aquí.";
+            this->lblRespuesta->TextAlign = System::Drawing::ContentAlignment::TopCenter;
             // 
             // lblTitle
             // 

@@ -1,8 +1,10 @@
 #include "MemoryManager.h"
+#include "interfaz.h"
 #include "ErrorLogger.h"
 #include "InfoLogger.h"
 #include <iostream>
 #include <sstream>
+#include "ActualizarRespuesta.h"
 
 // Inicializar el estado de la memoria
 std::unordered_map<int, MemoryManager::MemoryBlock> MemoryManager::memoryBlocks;
@@ -71,6 +73,7 @@ std::string MemoryManager::processRequest(const std::string& request) {
     }
     else {
         ErrorLogger::logError("Comando no reconocido: " + command);
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: No se pudo procesar la solicitud.");
         return "Error: Comando no reconocido";
     }
 }
