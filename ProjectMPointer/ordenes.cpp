@@ -1,6 +1,7 @@
 #include "ordenes.h"
 #include "Server.h"
 #include "MemoryManager.h"
+#include "interfaz.h"
 #include <iostream>
 #include <string>
 #include "ErrorLogger.h"
@@ -11,10 +12,14 @@ void handleClient(SOCKET clientSocket) {
     int bytesReceived;
 
     while (true) {
+        // Limpiar el buffer antes de recibir nuevos datos
+        memset(buffer, 0, sizeof(buffer));
+
         bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
         if (bytesReceived <= 0) {
             std::cout << "Cliente desconectado o error en la recepción.\n";
             std::string mensajeError = "Cliente desconectado o error en la recepción.";
+            ErrorLogger::logError(mensajeError);
             break;
         }
 
@@ -28,7 +33,13 @@ void handleClient(SOCKET clientSocket) {
         std::string response = MemoryManager::processRequest(request);
 
         // Enviar la respuesta al cliente
-        send(clientSocket, response.c_str(), response.length(), 0);
+        int bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
+        if (bytesSent == SOCKET_ERROR) {
+            std::string mensajeError = "Error al enviar la respuesta al cliente.";
+            ErrorLogger::logError(mensajeError);
+            break;
+        }
+
     }
 
     closesocket(clientSocket);
