@@ -23,7 +23,7 @@
 ## MemoryManager.h
 - Calse encargada de la administracion de memoria y las ordenes que resive.
 
-##Server.h
+## Server.h
 - Informacion para inicializar el server y conectarse con el cliente
 
 ## ordenes.h
