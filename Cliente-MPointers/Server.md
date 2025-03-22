@@ -1,6 +1,6 @@
 # Explicacion de los archivos usados en el Server
 
-** Empezamos con los archivos.h (Clases) **
+* Empezamos con los archivos.h (Clases) y despues con los archivos.cpp que contienen la logica
 
 ## interfaz.h
 - Este contiene la logica respecto a los componentes de la interfaz
@@ -21,7 +21,7 @@
 - Clase que guarda lo que sucede con las peticiones del cliente.
 
 ## MemoryManager.h
-- Calse encargada de la administracion de memoria.
+- Calse encargada de la administracion de memoria y las ordenes que resive.
 
 ##Server.h
 - Informacion para inicializar el server y conectarse con el cliente
@@ -29,7 +29,26 @@
 ## ordenes.h
 - Clase que maneja los comandos que puede resivir del cliente. Para asi saber que debede hacer.
 
-** Seguimos con los archivos.cpp **
+## ErrorLogger.cpp
+- Logica necesaria para el funcionamiento de recopilacion de los errores.
+- Se guarda en una sub carpeta de logs, llamada error
+
+## InfoLogger.cpp
+- Logica para recopilar datos, info o alguna informacion no asociada conb las ordenes que resive del cliente.
+-  Se guarda en una subcarpeta llamada logs, sub carpeta llamada info
+
+## MemoryLogger.cpp
+- Basiamente tiene la logica para guardar la informacion de las ordenes que resive del cliente
+  
+## MemoryManager
+- Posee lalogica que sabe que hacer con los comandos que resive
+- Hace algunas validaciones para asegurarse qeu la informacion que se guarda y envia sea la correcta y evitar errores
+
+## Server.cpp
+- Logica encargada de inicializar al servidor y manejar la coneccion con el cliente
+
+## ordenes.cpp
+- Encargado de las respuestas hacia el cliente
 
 
 
