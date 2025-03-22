@@ -63,7 +63,7 @@ namespace ClienteMPointers {
             this->btnCliente->BackColor = System::Drawing::SystemColors::InactiveCaption;
             this->btnCliente->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
-            this->btnCliente->Location = System::Drawing::Point(451, 129);
+            this->btnCliente->Location = System::Drawing::Point(434, 151);
             this->btnCliente->Name = L"btnCliente";
             this->btnCliente->Size = System::Drawing::Size(224, 80);
             this->btnCliente->TabIndex = 0;
@@ -75,7 +75,7 @@ namespace ClienteMPointers {
             // 
             this->txtPeticion->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
-            this->txtPeticion->Location = System::Drawing::Point(56, 86);
+            this->txtPeticion->Location = System::Drawing::Point(44, 97);
             this->txtPeticion->Name = L"txtPeticion";
             this->txtPeticion->Size = System::Drawing::Size(290, 50);
             this->txtPeticion->TabIndex = 1;
@@ -85,7 +85,7 @@ namespace ClienteMPointers {
             this->lblRespuesta->BackColor = System::Drawing::Color::LightGray;
             this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 21.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
-            this->lblRespuesta->Location = System::Drawing::Point(50, 150);
+            this->lblRespuesta->Location = System::Drawing::Point(38, 172);
             this->lblRespuesta->Name = L"lblRespuesta";
             this->lblRespuesta->Size = System::Drawing::Size(308, 164);
             this->lblRespuesta->TabIndex = 2;

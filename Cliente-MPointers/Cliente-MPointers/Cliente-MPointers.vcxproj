@@ -125,6 +125,7 @@
     <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryLogger.cpp" />
+    <ClCompile Include="MPointers.cpp" />
     <ClCompile Include="Solicitudes.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -134,6 +135,8 @@
     <ClInclude Include="ErrorLogger.h" />
     <ClInclude Include="InfoLogger.h" />
     <ClInclude Include="MemoryLogger.h" />
+    <ClInclude Include="MPointer.h" />
+    <ClInclude Include="SocketUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Cliente.resx">

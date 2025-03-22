@@ -33,6 +33,9 @@
     <ClCompile Include="Solicitudes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MPointers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cliente.h">
@@ -45,6 +48,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MemoryLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MPointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
