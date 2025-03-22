@@ -11,7 +11,7 @@ void ErrorLogger::logError(const std::string& message) {
 
     // Crear la carpeta "logs/errors" si no existe
     if (!fs::exists("logs/errors")) {
-        if (!fs::create_directories("logs/errors")) {
+        if (!fs::create_directories("logs/errors")) { // Crear directorios recursivamente
             std::cerr << "Error: No se pudo crear la carpeta 'logs/errors'." << std::endl;
             std::string mensajeError = "Error: No se pudo crear la carpeta 'logs/info'.";
             ErrorLogger::logError(mensajeError);
@@ -32,7 +32,7 @@ void ErrorLogger::logError(const std::string& message) {
     }
 }
 
-std::string ErrorLogger::getCurrentTime() {
+std::string ErrorLogger::getCurrentTime() { //Metodo que obtiene la hora exacta
     auto now = std::chrono::system_clock::now();
     auto now_time_t = std::chrono::system_clock::to_time_t(now);
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;

@@ -6,8 +6,8 @@
 #include <string>
 
 // Constantes
-const int PORT = 12345;
-const int MAX_PENDING_CONNECTIONS = 10;
+const int PORT = 12345; // Puerto de escucha
+const int MAX_PENDING_CONNECTIONS = 10; // Número máximo de conexiones pendientes
 
 // Declaraciones de funciones
 int startWinsock();
