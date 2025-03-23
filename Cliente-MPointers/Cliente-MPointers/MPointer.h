@@ -2,49 +2,33 @@
 #define MPOINTER_H
 
 #include <string>
-#include "SocketUtils.h" // Para usar las funciones de sockets
+#include <stdexcept>
+#include <sstream>
+#include <typeinfo>
 
 template <typename T>
 class MPointer {
-private:
-    int id; // ID del bloque de memoria en el Memory Manager
-    static std::string serverAddress; // Dirección del servidor (Memory Manager)
-    static int serverPort; // Puerto del servidor
-
-    // Método para enviar una petición al Memory Manager
-    std::string sendRequest(const std::string& request);
-
 public:
-    // Constructor por defecto
+    // Constructor y destructor
     MPointer();
-
-    // Constructor con ID
     MPointer(int id);
-
-    // Destructor
     ~MPointer();
 
-    // Método estático para inicializar la conexión con el Memory Manager
+    // Funciones de gestión de memoria
     static void Init(const std::string& address, int port);
-
-    // Método estático para crear un nuevo MPointer
     static MPointer<T> New();
 
-    // Sobrecarga del operador *
+    // Operadores
     T operator*();
-
-    // Sobrecarga del operador =
-    MPointer<T>& operator=(const MPointer<T>& other);
-
-    // Sobrecarga del operador &
+    MPointer<T>& operator=(const MPointer<T>& other); // Declaración correcta
+    void operator=(const T& value); // Sobrecarga para asignación de valores
     int operator&();
+
+private:
+    int id; // ID del bloque de memoria
+    static std::string serverAddress; // Dirección del servidor
+    static int serverPort; // Puerto del servidor
+    std::string sendRequest(const std::string& request); // Función de utilidad
 };
-
-// Inicialización de variables estáticas
-template <typename T>
-std::string MPointer<T>::serverAddress = "";
-
-template <typename T>
-int MPointer<T>::serverPort = 0;
 
 #endif // MPOINTER_H

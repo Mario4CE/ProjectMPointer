@@ -44,7 +44,7 @@ namespace ClienteMPointers {
         System::Void btnCliente_Click(System::Object^ sender, System::EventArgs^ e);
 
         // Declaración de la función EnviarPeticion
-        std::string EnviarPeticion(const std::string& peticion); // Declaración correcta
+        //std::string EnviarPeticion(const std::string& peticion); // Declaración correcta
 
 #pragma region Windows Form Designer generated code
         /// <summary>
