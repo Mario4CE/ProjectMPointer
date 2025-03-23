@@ -8,8 +8,8 @@
 #include "InfoLogger.h"
 
 void handleClient(SOCKET clientSocket) {
-    char buffer[1024];
-    int bytesReceived;
+    char buffer[1024]; // Buffer para recibir datos
+    int bytesReceived; // N?mero de bytes recibidos
 
     while (true) {
         // Limpiar el buffer antes de recibir nuevos datos

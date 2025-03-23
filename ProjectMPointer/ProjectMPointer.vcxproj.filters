@@ -44,9 +44,6 @@
     <ClInclude Include="interfaz.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Class.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Server.h">
       <Filter>Header Files</Filter>
     </ClInclude>

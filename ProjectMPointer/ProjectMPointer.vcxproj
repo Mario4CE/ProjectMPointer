@@ -130,7 +130,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Class.h" />
     <ClInclude Include="ErrorLogger.h" />
     <ClInclude Include="InfoLogger.h" />
     <ClInclude Include="interfaz.h">
