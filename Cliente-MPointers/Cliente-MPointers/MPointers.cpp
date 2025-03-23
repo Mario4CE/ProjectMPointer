@@ -1,5 +1,7 @@
 #include "MPointer.h"
 #include "SocketUtils.h"
+#include "ErrorLogger.h"
+#include "InfoLogger.h"
 #include <stdexcept>
 #include <sstream>
 #include <typeinfo>
@@ -35,6 +37,8 @@ MPointer<T> MPointer<T>::New() {
         newId = std::stoi(response);
     }
     catch (const std::invalid_argument& e) {
+        std::string mensajeError = "Error al convertir la respuesta del servidor a entero: " + std::string(e.what());
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
     }
 
@@ -50,6 +54,8 @@ T MPointer<T>::operator*() {
     std::istringstream converter(response);
     T value;
     if (!(converter >> value)) {
+        std::string mensajeError = "Error al convertir la respuesta del servidor a tipo " + std::string(typeid(T).name());
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Error al convertir la respuesta del servidor a tipo " + std::string(typeid(T).name()));
     }
 
@@ -97,6 +103,8 @@ std::string MPointer<T>::sendRequest(const std::string& request) {
 
         // Verificar si la respuesta está vacía o es inválida
         if (response.empty()) {
+            std::string mensajeError = "El servidor no devolvió una respuesta válida.";
+            ErrorLogger::logError(mensajeError);
             throw std::runtime_error("El servidor no devolvió una respuesta válida.");
         }
 
@@ -104,6 +112,8 @@ std::string MPointer<T>::sendRequest(const std::string& request) {
     }
     catch (const std::exception& e) {
         // Capturar y relanzar excepciones con un mensaje más descriptivo
+        std::string mensajeError = "Error en sendRequest: " + std::string(e.what());
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Error en sendRequest: " + std::string(e.what()));
     }
 }

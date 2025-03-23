@@ -1,5 +1,7 @@
 
 #include "SocketUtils.h"
+#include "ErrorLogger.h"
+#include "InfoLogger.h"
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iostream>
@@ -11,6 +13,8 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
     // Inicializar Winsock
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::string mensajeError = "Error al inicializar Winsock.";
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Error al inicializar Winsock.");
     }
 
@@ -18,6 +22,8 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
     SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == INVALID_SOCKET) {
         WSACleanup();
+        std::string mensajeError = "Error al crear el socket.";
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Error al crear el socket.");
     }
 
@@ -28,6 +34,8 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
     if (inet_pton(AF_INET, address.c_str(), &serverAddr.sin_addr) <= 0) {
         closesocket(clientSocket);
         WSACleanup();
+        std::string mensajeError = "Dirección IP inválida.";
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Dirección IP inválida.");
     }
 
@@ -36,6 +44,8 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
         int error = WSAGetLastError();
         closesocket(clientSocket);
         WSACleanup();
+        std::string mensajeError = "Error al conectar con el servidor. Código de error: " + std::to_string(error);
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Error al conectar con el servidor. Código de error: " + std::to_string(error));
     }
 
@@ -44,6 +54,8 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
         int error = WSAGetLastError();
         closesocket(clientSocket);
         WSACleanup();
+        std::string mensajeError = "Error al enviar la petición. Código de error: " + std::to_string(error);
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Error al enviar la petición. Código de error: " + std::to_string(error));
     }
 
@@ -58,6 +70,8 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
         int error = WSAGetLastError();
         closesocket(clientSocket);
         WSACleanup();
+        std::string mensajeError = "Error al recibir la respuesta. Código de error: " + std::to_string(error);
+        ErrorLogger::logError(mensajeError);
         throw std::runtime_error("Error al recibir la respuesta. Código de error: " + std::to_string(error));
     }
 
