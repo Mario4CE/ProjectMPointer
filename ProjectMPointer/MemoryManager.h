@@ -1,9 +1,14 @@
+
 #ifndef MEMORYMANAGER_H
 #define MEMORYMANAGER_H
 
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <stdexcept>
+#include <iostream>
+#include <sstream>
+#include <cstring> // Para memcpy
 
 class MemoryManager {
 public:
@@ -12,17 +17,17 @@ public:
 
     // Estructura de un bloque de memoria
     struct MemoryBlock {
-        int id;
-        size_t size;
-        std::string type;
-        std::string value;
-        int refCount;
+        int id;                // Identificador único del bloque
+        size_t size;           // Tamaño del bloque en bytes
+        std::string type;      // Tipo de dato almacenado en el bloque
+        int refCount;          // Contador de referencias
+        std::vector<char> data; // Espacio de memoria reservado (simulado con un vector de bytes)
     };
 
-    // Simulación del estado de la memoria
+    // Obtener el estado actual de la memoria
     static std::vector<std::string> getMemoryState();
 
-    // Procesar una petición
+    // Procesar una petición (comando)
     static std::string processRequest(const std::string& request);
 
 private:
@@ -41,6 +46,9 @@ private:
     static std::string handleGet(int id);
     static std::string handleIncreaseRefCount(int id);
     static std::string handleDecreaseRefCount(int id);
+
+    // Validar que el tamaño sea congruente con el tipo de dato
+    static bool validateSizeForType(const std::string& type, size_t size);
 };
 
 #endif // MEMORYMANAGER_H
