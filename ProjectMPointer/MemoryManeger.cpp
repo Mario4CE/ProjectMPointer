@@ -114,6 +114,7 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 
     // Validar que el tamaño sea congruente con el tipo de dato
     if (!validateSizeForType(type, blockSize)) {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo de dato: " + type);
         ErrorLogger::logError("Error: Tamaño incongruente con el tipo de dato: " + type);
         std::cerr << "Error: Tamaño incongruente con el tipo de dato: " << type << std::endl;
         return "Error: Tamaño incongruente con el tipo de dato";
@@ -162,6 +163,7 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
         std::memcpy(block.data.data(), &floatValue, sizeof(float));
     }
     else {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + block.type);
         ErrorLogger::logError("Error: Tipo de dato no soportado: " + block.type);
         std::cerr << "Error: Tipo de dato no soportado: " << block.type << std::endl;
         return "Error: Tipo de dato no soportado";
@@ -174,6 +176,7 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
 // Manejar la obtención de un valor de un bloque de memoria
 std::string MemoryManager::handleGet(int id) {
     if (memoryBlocks.find(id) == memoryBlocks.end()) {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: ID no encontrado: " + std::to_string(id));
         ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
@@ -204,6 +207,7 @@ std::string MemoryManager::handleGet(int id) {
         ss << floatValue;
     }
     else {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + block.type);
         ErrorLogger::logError("Error: Tipo de dato no soportado: " + block.type);
         std::cerr << "Error: Tipo de dato no soportado: " << block.type << std::endl;
         return "Error: Tipo de dato no soportado";

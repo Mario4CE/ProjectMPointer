@@ -46,7 +46,7 @@ namespace InterfazCLI {
             // lblRespuesta
             // 
             this->lblRespuesta->BackColor = System::Drawing::Color::LightGray;
-            this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 21.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->lblRespuesta->Location = System::Drawing::Point(12, 72);
             this->lblRespuesta->Name = L"lblRespuesta";
