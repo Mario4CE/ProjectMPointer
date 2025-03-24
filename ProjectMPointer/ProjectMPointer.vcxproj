@@ -125,7 +125,7 @@
     <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="MemoryManeger.cpp" />
     <ClCompile Include="MemoryLogger.cpp" />
-    <ClCompile Include="ordenes.cpp" />
+    <ClCompile Include="ClienteManager.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -137,7 +137,7 @@
     </ClInclude>
     <ClInclude Include="MemoryLogger.h" />
     <ClInclude Include="MemoryManager.h" />
-    <ClInclude Include="ordenes.h" />
+    <ClInclude Include="ClienteManager.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>

@@ -24,7 +24,7 @@
     <ClCompile Include="MemoryManeger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ordenes.cpp">
+    <ClCompile Include="ClienteManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MemoryLogger.cpp">
@@ -47,7 +47,7 @@
     <ClInclude Include="Server.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ordenes.h">
+    <ClInclude Include="ClienteManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MemoryLogger.h">
