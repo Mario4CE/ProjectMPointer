@@ -1,5 +1,8 @@
 
 #include "MemoryManager.h"
+#include "ActualizarRespuesta.h"
+#include "ErrorLogger.h"
+#include "interfaz.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -73,6 +76,9 @@ std::string MemoryManager::processRequest(const std::string& request) {
         return handleDecreaseRefCount(id);
     }
     else {
+        std::string mensajeError = "Error: Comando no reconocido: " + command;
+        ErrorLogger::logError(mensajeError);
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Comando no reconocido: " + command);
         std::cerr << "Error: Comando no reconocido: " << command << std::endl;
         return "Error: Comando no reconocido";
     }
@@ -94,6 +100,10 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     }
     else {
         // Tipo no soportado
+        ErrorLogger::logError("Error: Tipo de dato no soportado: " + type);
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + type);
+        std::cerr << "Error: Tipo de dato no soportado: " << type << std::endl;
+        return "Error: Tipo de dato no soportado";
         return false;
     }
 }
@@ -104,6 +114,7 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 
     // Validar que el tamaño sea congruente con el tipo de dato
     if (!validateSizeForType(type, blockSize)) {
+        ErrorLogger::logError("Error: Tamaño incongruente con el tipo de dato: " + type);
         std::cerr << "Error: Tamaño incongruente con el tipo de dato: " << type << std::endl;
         return "Error: Tamaño incongruente con el tipo de dato";
     }
@@ -125,6 +136,8 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 // Manejar la asignación de un valor a un bloque de memoria
 std::string MemoryManager::handleSet(int id, const std::string& value) {
     if (memoryBlocks.find(id) == memoryBlocks.end()) {
+        std::string mensajeError = "Error: ID no encontrado: " + std::to_string(id);
+        ErrorLogger::logError(mensajeError);
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
@@ -149,6 +162,7 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
         std::memcpy(block.data.data(), &floatValue, sizeof(float));
     }
     else {
+        ErrorLogger::logError("Error: Tipo de dato no soportado: " + block.type);
         std::cerr << "Error: Tipo de dato no soportado: " << block.type << std::endl;
         return "Error: Tipo de dato no soportado";
     }
@@ -160,6 +174,7 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
 // Manejar la obtención de un valor de un bloque de memoria
 std::string MemoryManager::handleGet(int id) {
     if (memoryBlocks.find(id) == memoryBlocks.end()) {
+        ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
@@ -189,6 +204,7 @@ std::string MemoryManager::handleGet(int id) {
         ss << floatValue;
     }
     else {
+        ErrorLogger::logError("Error: Tipo de dato no soportado: " + block.type);
         std::cerr << "Error: Tipo de dato no soportado: " << block.type << std::endl;
         return "Error: Tipo de dato no soportado";
     }
@@ -200,6 +216,7 @@ std::string MemoryManager::handleGet(int id) {
 // Manejar el incremento del contador de referencias
 std::string MemoryManager::handleIncreaseRefCount(int id) {
     if (memoryBlocks.find(id) == memoryBlocks.end()) {
+        ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
@@ -211,6 +228,7 @@ std::string MemoryManager::handleIncreaseRefCount(int id) {
 // Manejar el decremento del contador de referencias
 std::string MemoryManager::handleDecreaseRefCount(int id) {
     if (memoryBlocks.find(id) == memoryBlocks.end()) {
+        ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
