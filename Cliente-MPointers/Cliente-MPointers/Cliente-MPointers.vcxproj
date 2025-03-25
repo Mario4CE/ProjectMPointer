@@ -125,7 +125,6 @@
     <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryLogger.cpp" />
-    <ClCompile Include="MPointers.cpp" />
     <ClCompile Include="BtnEnvio.cpp" />
   </ItemGroup>
   <ItemGroup>
