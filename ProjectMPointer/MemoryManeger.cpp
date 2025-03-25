@@ -2,11 +2,13 @@
 #include "MemoryManager.h"
 #include "ActualizarRespuesta.h"
 #include "ErrorLogger.h"
+#include "MemoryLogger.h"
 #include "interfaz.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <iomanip>
 
 
 // Inicializar el estado de la memoria
@@ -34,7 +36,9 @@ std::vector<std::string> MemoryManager::getMemoryState() {
     return state;
 }
 
-// Procesar una petición
+// Procesar una petición de los comandos Create, Set, Get, IncreaseRefCount y DecreaseRefCount
+//Procesa solo los 5 comandos que puede resivir
+
 std::string MemoryManager::processRequest(const std::string& request) {
     // Inicializar la memoria si no está inicializada
     if (memoryBlocks.empty()) {
@@ -84,7 +88,10 @@ std::string MemoryManager::processRequest(const std::string& request) {
     }
 }
 
+//Funcion que valida los datos ingresados por el usuario del metodo  "Creat Type Size"
 // Validar que el tamaño sea congruente con el tipo de dato
+// LLamado a la funcion validateSizeForType que valida el tamaño del tipo de dato
+
 bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     if (type == "int") {
         return size % sizeof(int) == 0; // El tamaño debe ser un múltiplo de sizeof(int)
@@ -112,10 +119,14 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
 }
 
 // Manejar la creación de un bloque de memoria
+//Validacion para que el metodo create se guarde
+
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
     size_t blockSize = std::stoul(size);
 
     // Validar que el tamaño sea congruente con el tipo de dato
+    // LLamado a la funcion validateSizeForType que valida el tamaño del tipo de dato
+
     if (!validateSizeForType(type, blockSize)) {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo de dato: " + type);
         ErrorLogger::logError("Error: Tamaño incongruente con el tipo de dato: " + type);
@@ -131,6 +142,21 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 
     // Reservar espacio en memoria (simulado con un vector de bytes)
     block.data.resize(blockSize); // data es un std::vector<char>
+
+    memoryBlocks[block.id] = block;
+
+    std::string successMsg = "Creado bloque ID: " + std::to_string(block.id);
+
+    //Manda respuesta al formulario
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(block.id)+ "Tamaño: "+ size + "Tipo: " + type);
+
+    //Manda respuesta al log del MemoryLogger
+    MemoryLogger::logRequest("CREATE - " + successMsg + " - Tamaño: " + size + " - Tipo: " + type);
+
+    // Registra el estado actual de la memoria usando getMemoryState()
+    MemoryLogger::logMemoryState(getMemoryState());
+    //Manda respuesta al cliente
+
 
     memoryBlocks[block.id] = block;
     std::cout << "Creado bloque ID: " << block.id << std::endl;
