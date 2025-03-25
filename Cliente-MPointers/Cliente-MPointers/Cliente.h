@@ -1,32 +1,40 @@
+
 #pragma once
 
-#include <string>
+#include <msclr/gcroot.h>
+#include "MPointer.h"
 
 namespace ClienteMPointers {
-
     using namespace System;
-    using namespace System::ComponentModel;
-    using namespace System::Collections;
     using namespace System::Windows::Forms;
-    using namespace System::Data;
-    using namespace System::Drawing;
 
-    /// <summary>
-    /// Summary for Cliente
-    /// </summary>
-    public ref class Cliente : public System::Windows::Forms::Form {
+    public ref class Cliente : public Form {
+    private:
+        MPointer<int>* mptrInt;
+        MPointer<double>* mptrDouble;
+
     public:
         Cliente(void) {
             InitializeComponent();
+
+            // Inicialización correcta
+            mptrInt = new MPointer<int>();
+            mptrDouble = new MPointer<double>();
+
+            // Configuración del servidor
+            MPointer<int>::Init("127.0.0.1", 12345);
+            MPointer<double>::Init("127.0.0.1", 12345);
         }
 
     protected:
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
         ~Cliente() {
-            if (components) {
-                delete components;
+            if (mptrInt != nullptr) {
+                delete mptrInt;
+                mptrInt = nullptr;
+            }
+            if (mptrDouble != nullptr) {
+                delete mptrDouble;
+                mptrDouble = nullptr;
             }
         }
 

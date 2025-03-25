@@ -98,6 +98,9 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     else if (type == "float") {
         return size % sizeof(float) == 0; // El tamaño debe ser un múltiplo de sizeof(float)
     }
+    else if (type == "string" || type == "str") {
+        return true; // Para strings, cualquier tamaño es válido
+    }
     else {
         // Tipo no soportado
         ErrorLogger::logError("Error: Tipo de dato no soportado: " + type);
@@ -162,6 +165,13 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
         float floatValue = std::stof(value);
         std::memcpy(block.data.data(), &floatValue, sizeof(float));
     }
+    else if (block.type == "string" || block.type == "str") {
+        // Para strings, almacenamos el contenido completo
+        if (block.data.size() < value.size()) {
+            block.data.resize(value.size());
+        }
+        std::memcpy(block.data.data(), value.data(), value.size());
+    }
     else {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + block.type);
         ErrorLogger::logError("Error: Tipo de dato no soportado: " + block.type);
@@ -205,6 +215,10 @@ std::string MemoryManager::handleGet(int id) {
         float floatValue;
         std::memcpy(&floatValue, block.data.data(), sizeof(float));
         ss << floatValue;
+    }
+    else if (block.type == "string" || block.type == "str") {
+        // Para strings, leemos directamente los datos almacenados
+        ss << std::string(block.data.begin(), block.data.end());
     }
     else {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + block.type);
