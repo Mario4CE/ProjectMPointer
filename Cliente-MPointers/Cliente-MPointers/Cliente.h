@@ -12,6 +12,8 @@ namespace ClienteMPointers {
     private:
         MPointer<int>* mptrInt;
         MPointer<double>* mptrDouble;
+        MPointer<float>* mptrFloat;
+        MPointer<std::string>* mptrStr;
 
     public:
         Cliente(void) {
@@ -20,10 +22,15 @@ namespace ClienteMPointers {
             // Inicialización correcta
             mptrInt = new MPointer<int>();
             mptrDouble = new MPointer<double>();
+            mptrFloat = new MPointer<float>();
+            mptrStr = new MPointer<std::string>();
 
             // Configuración del servidor
             MPointer<int>::Init("127.0.0.1", 12345);
             MPointer<double>::Init("127.0.0.1", 12345);
+            MPointer<float>::Init("127.0.0.1", 12345);
+            MPointer<std::string>::Init("127.0.0.1", 12345);
+
         }
 
     protected:
@@ -36,6 +43,15 @@ namespace ClienteMPointers {
                 delete mptrDouble;
                 mptrDouble = nullptr;
             }
+            if (mptrFloat != nullptr) {
+                delete mptrFloat;
+                mptrFloat = nullptr;
+            }
+            if (mptrStr != nullptr) {
+                delete mptrStr;
+                mptrStr = nullptr;
+            }
+
         }
 
     private:

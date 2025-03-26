@@ -3,6 +3,7 @@
 #include "MemoryManager.h"
 #include "ErrorLogger.h"
 #include "InfoLogger.h"
+#include "ActualizarRespuesta.h"
 
 int startWinsock() {
     WSADATA wsa;
@@ -51,6 +52,7 @@ int startServer() {
                 std::cout << "Socket asociado al puerto " << PORT << "\n";
                 std::string mensajeInfo = "Socket asociado al puerto " + std::to_string(PORT);
                 InfoLogger::logInfo(mensajeInfo);
+                InterfazCLI::Respuestas::SendMessage("Socket asociado al puerto " + std::to_string(PORT));
                 rc = listen(acceptSocket, MAX_PENDING_CONNECTIONS);
                 if (rc == SOCKET_ERROR) {
                     std::cout << "Error: listen, código de error: " << WSAGetLastError() << std::endl;
@@ -62,6 +64,11 @@ int startServer() {
                     std::cout << "acceptSocket está en modo de escucha....\n";
                     std::string mensajeInfo = "acceptSocket está en modo de escucha....";
                     InfoLogger::logInfo(mensajeInfo);
+                    InterfazCLI::Respuestas::SendMessage("acceptSocket está en modo de escucha....");
+                    //Espera 5 sgundos para cambiar la respuesta del label
+                    Sleep(5000);
+                    InterfazCLI::Respuestas::SendMessage("Esperando conexión...");
+                    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexión...");
                     while (true) {
                         SOCKET connectedSocket = accept(acceptSocket, NULL, NULL);
                         if (connectedSocket == INVALID_SOCKET) {
@@ -74,6 +81,9 @@ int startServer() {
                             std::cout << "¡Nueva conexión aceptada!\n";
                             std::string mensajeInfo = "¡Nueva conexión aceptada!";
                             InfoLogger::logInfo(mensajeInfo);
+                            InterfazCLI::Respuestas::SendMessage("¡Nueva conexión aceptada!");
+                            Sleep(5000);
+                            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
                             handleClient(connectedSocket);
                         }
                     }

@@ -8,21 +8,24 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-#include <iomanip>
+#include <variant>
+#include <string>
 
-
-// Inicializar el estado de la memoria
+// Inicializar variables estáticas
+std::vector<char> MemoryManager::memoryPool;
 std::unordered_map<int, MemoryManager::MemoryBlock> MemoryManager::memoryBlocks;
+std::vector<std::pair<size_t, size_t>> MemoryManager::freeBlocks;
 int MemoryManager::nextId = 1;
 
-// Inicializar la memoria
-void MemoryManager::initializeMemory() {
-    memoryBlocks.clear(); // Limpiar el estado de la memoria
-    nextId = 1; // Reiniciar el contador de IDs
-    std::cout << "Memoria inicializada con " << SIZE_MB << " MB." << std::endl;
+void MemoryManager::initialize() {
+    memoryPool.resize(TOTAL_MEMORY);
+    freeBlocks.clear();
+    freeBlocks.emplace_back(0, TOTAL_MEMORY);
+    memoryBlocks.clear();
+    nextId = 1;
+    std::cout << "Memoria inicializada con " << (TOTAL_MEMORY / (1024 * 1024)) << " MB." << std::endl;
 }
 
-// Obtener el estado de la memoria
 std::vector<std::string> MemoryManager::getMemoryState() {
     std::vector<std::string> state;
     for (const auto& block : memoryBlocks) {
@@ -30,137 +33,103 @@ std::vector<std::string> MemoryManager::getMemoryState() {
         ss << "ID: " << block.second.id
             << ", Tamaño: " << block.second.size
             << ", Tipo: " << block.second.type
-            << ", RefCount: " << block.second.refCount;
+            << ", RefCount: " << block.second.refCount
+            << ", Dirección: " << static_cast<const void*>(block.second.data.data());
+
         state.push_back(ss.str());
     }
     return state;
 }
 
-// Procesar una petición de los comandos Create, Set, Get, IncreaseRefCount y DecreaseRefCount
-//Procesa solo los 5 comandos que puede resivir
-
 std::string MemoryManager::processRequest(const std::string& request) {
-    // Inicializar la memoria si no está inicializada
-    if (memoryBlocks.empty()) {
-        initializeMemory();
+    if (memoryPool.empty()) {
+        initialize();
     }
 
-    // Registrar la petición en el log de información
-    std::cout << "Petición recibida: " << request << std::endl;
-
-    // Procesar la petición
+    MemoryLogger::logRequest("CMD: " + request);
     std::istringstream iss(request);
     std::string command;
     iss >> command;
 
-    if (command == "Create") {
-        std::string size, type;
-        iss >> size >> type;
-        return handleCreate(size, type);
+    try {
+        if (command == "Create") {
+            std::string size, type;
+            iss >> size >> type;
+            return handleCreate(size, type);
+        }
+        else if (command == "Set") {
+            int id;
+            std::string value;
+            iss >> id >> value;
+            return handleSet(id, value);
+        }
+        else if (command == "Get") {
+            int id;
+            iss >> id;
+            return handleGet(id);
+        }
+        else if (command == "IncreaseRefCount") {
+            int id;
+            iss >> id;
+            return handleIncreaseRefCount(id);
+        }
+        else if (command == "DecreaseRefCount") {
+            int id;
+            iss >> id;
+            return handleDecreaseRefCount(id);
+        }
+        else {
+            throw std::invalid_argument("Comando no reconocido: " + command);
+        }
     }
-    else if (command == "Set") {
-        int id;
-        std::string value;
-        iss >> id >> value;
-        return handleSet(id, value);
-    }
-    else if (command == "Get") {
-        int id;
-        iss >> id;
-        return handleGet(id);
-    }
-    else if (command == "IncreaseRefCount") {
-        int id;
-        iss >> id;
-        return handleIncreaseRefCount(id);
-    }
-    else if (command == "DecreaseRefCount") {
-        int id;
-        iss >> id;
-        return handleDecreaseRefCount(id);
-    }
-    else {
-        std::string mensajeError = "Error: Comando no reconocido: " + command;
-        ErrorLogger::logError(mensajeError);
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Comando no reconocido: " + command);
-        std::cerr << "Error: Comando no reconocido: " << command << std::endl;
-        return "Error: Comando no reconocido";
+    catch (const std::exception& e) {
+        std::string errorMsg = "Error: " + std::string(e.what());
+        ErrorLogger::logError(errorMsg);
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario(errorMsg);
+        return errorMsg;
     }
 }
-
-//Funcion que valida los datos ingresados por el usuario del metodo  "Creat Type Size"
-// Validar que el tamaño sea congruente con el tipo de dato
-// LLamado a la funcion validateSizeForType que valida el tamaño del tipo de dato
 
 bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
-    if (type == "int") {
-        return size % sizeof(int) == 0; // El tamaño debe ser un múltiplo de sizeof(int)
-    }
-    else if (type == "double") {
-        return size % sizeof(double) == 0; // El tamaño debe ser un múltiplo de sizeof(double)
-    }
-    else if (type == "char") {
-        return size % sizeof(char) == 0; // El tamaño debe ser un múltiplo de sizeof(char)
-    }
-    else if (type == "float") {
-        return size % sizeof(float) == 0; // El tamaño debe ser un múltiplo de sizeof(float)
-    }
-    else if (type == "string" || type == "str") {
-        return true; // Para strings, cualquier tamaño es válido
-    }
-    else {
-        // Tipo no soportado
-        ErrorLogger::logError("Error: Tipo de dato no soportado: " + type);
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + type);
-        std::cerr << "Error: Tipo de dato no soportado: " << type << std::endl;
-        return "Error: Tipo de dato no soportado";
-        return false;
-    }
+    if (type == "int") return size % sizeof(int) == 0;
+    if (type == "double") return size % sizeof(double) == 0;
+    if (type == "char") return size % sizeof(char) == 0;
+    if (type == "float") return size % sizeof(float) == 0;
+    if (type == "string" || type == "str") return true;
+
+    throw std::invalid_argument("Tipo de dato no soportado: " + type);
 }
 
-// Manejar la creación de un bloque de memoria
-//Validacion para que el metodo create se guarde
-
+// En handleCreate
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
     size_t blockSize = std::stoul(size);
-
-    // Validar que el tamaño sea congruente con el tipo de dato
-    // LLamado a la funcion validateSizeForType que valida el tamaño del tipo de dato
-
     if (!validateSizeForType(type, blockSize)) {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo de dato: " + type);
-        ErrorLogger::logError("Error: Tamaño incongruente con el tipo de dato: " + type);
-        std::cerr << "Error: Tamaño incongruente con el tipo de dato: " << type << std::endl;
-        return "Error: Tamaño incongruente con el tipo de dato";
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo");
+        InterfazCLI::Respuestas::SendMessage("Error: Tamaño incongruente con el tipo");
+        return "Error: Tamaño incongruente con el tipo";
     }
 
-    MemoryBlock block;
-    block.id = nextId++;
-    block.size = blockSize;
-    block.type = type;
-    block.refCount = 1;
+    // Creación directa con constructor mejorado
+    MemoryBlock newBlock(nextId++, blockSize, type);
 
-    // Reservar espacio en memoria (simulado con un vector de bytes)
-    block.data.resize(blockSize); // data es un std::vector<char>
+    // Asignar memoria (si aún necesitas esta función)
+    if (!allocateMemory(newBlock.size, newBlock)) {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: No hay espacio suficiente");
+        InterfazCLI::Respuestas::SendMessage("Error: No hay espacio suficiente");
+        return "Error: No hay espacio suficiente";
+    }
 
-    memoryBlocks[block.id] = block;
+    // Insertar en el mapa
+    memoryBlocks[newBlock.id] = newBlock;
 
-    std::string successMsg = "Creado bloque ID: " + std::to_string(block.id);
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(newBlock.id));
+    InterfazCLI::Respuestas::SendMessage("Creado bloque ID: " + std::to_string(newBlock.id));
+    return "Creado bloque ID: " + std::to_string(newBlock.id);
+}
 
-    //Manda respuesta al formulario
-    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(block.id)+ "Tamaño: "+ size + "Tipo: " + type);
-
-    //Manda respuesta al log del MemoryLogger
-    MemoryLogger::logRequest("CREATE - " + successMsg + " - Tamaño: " + size + " - Tipo: " + type);
-
-    // Registra el estado actual de la memoria usando getMemoryState()
-    MemoryLogger::logMemoryState(getMemoryState());
-    //Manda respuesta al cliente
-
-
-    memoryBlocks[block.id] = block;
-    std::cout << "Creado bloque ID: " << block.id << std::endl;
-    return "Creado bloque ID: " + std::to_string(block.id);
+MemoryManager::MemoryBlock* MemoryManager::findBlock(int id) {
+    auto it = memoryBlocks.find(id);
+    return (it != memoryBlocks.end()) ? &it->second : nullptr;
 }
 
 // Manejar la asignación de un valor a un bloque de memoria
@@ -283,4 +252,30 @@ std::string MemoryManager::handleDecreaseRefCount(int id) {
     }
     std::cout << "RefCount decrementado para bloque ID: " << id << std::endl;
     return "RefCount decrementado para bloque ID: " + std::to_string(id);
+}
+
+bool MemoryManager::allocateMemory(size_t size, MemoryBlock& block) {
+    // 1. Buscar un bloque libre adecuado
+    for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it) {
+        auto& [start, blockSize] = *it;
+
+        if (blockSize >= size) {
+            // 2. Asignar memoria del pool
+            block.data.resize(size);
+
+            // 3. Actualizar lista de bloques libres
+            if (blockSize == size) {
+                freeBlocks.erase(it);
+            }
+            else {
+                it->first += size;
+                it->second -= size;
+            }
+
+            return true;
+        }
+    }
+
+    // 4. Si no hay espacio suficiente
+    return false;
 }

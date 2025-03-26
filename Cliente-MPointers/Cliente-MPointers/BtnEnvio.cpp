@@ -10,8 +10,12 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
     // Inicializar MPointer si no se ha hecho
     static bool initialized = false;
     if (!initialized) {
+
         MPointer<int>::Init("127.0.0.1", 12345);
         MPointer<double>::Init("127.0.0.1", 12345);
+        MPointer<float>::Init("127.0.0.1", 12345);
+        MPointer<std::string>::Init("127.0.0.1", 12345);
+
         initialized = true;
     }
 
@@ -36,14 +40,26 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
                 *mptrDouble = MPointer<double>::New();
                 respuesta = "Nuevo MPointer<double> creado ";
             }
+            else if (tipo == "float") {
+                *mptrFloat = MPointer<float>::New();
+                respuesta = "Nuevo MPointer<float> creado";
+            }
+            else if (tipo == "string") {
+                *mptrStr = MPointer<std::string>::New();
+                respuesta = "Nuevo MPointer<std::string> creado";
+            }
             else {
                 respuesta = "Tipo no soportado: " + tipo;
                 this->lblRespuesta->ForeColor = System::Drawing::Color::Red;
             }
         }
-        else {
+        else if (comando == "Get") {
             respuesta = SocketUtils::sendRequest("127.0.0.1", 12345, peticionStr);
             this->lblRespuesta->ForeColor = System::Drawing::Color::Black;
+        }
+        else {
+            respuesta = "Comando no soportado: " + comando;
+            this->lblRespuesta->ForeColor = System::Drawing::Color::Red;
         }
     }
     catch (const std::exception& e) {

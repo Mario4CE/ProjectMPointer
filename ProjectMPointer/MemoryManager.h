@@ -9,46 +9,76 @@
 #include <iostream>
 #include <sstream>
 #include <cstring> // Para memcpy
+#include <utility> // Para std::pair
 
 class MemoryManager {
 public:
-    // Tamaño de la memoria en MB
-    static const int SIZE_MB = 1024; // 1 GB de memoria (puedes cambiarlo)
+    // Tamaño total de la memoria (1GB)
+    static constexpr size_t TOTAL_MEMORY = 1024 * 1024 * 1024; // 1 GB en bytes
 
     // Estructura de un bloque de memoria
     struct MemoryBlock {
-        int id;                // Identificador único del bloque
-        size_t size;           // Tamaño del bloque en bytes
-        std::string type;      // Tipo de dato almacenado en el bloque
-        int refCount;          // Contador de referencias
-        std::vector<char> data; // Espacio de memoria reservado (simulado con un vector de bytes)
+        int id;
+        size_t size;
+        std::string type;
+        int refCount;
+        std::vector<char> data;
+
+        // Constructor por defecto necesario para std::unordered_map
+        MemoryBlock() : id(0), size(0), type(""), refCount(0) {}
+
+        // Constructor con parámetros
+        MemoryBlock(int i, size_t s, const std::string& t)
+            : id(i), size(s), type(t), refCount(1), data(s) {
+        }
+
+        // Constructor de copia
+        MemoryBlock(const MemoryBlock&) = default;
+
+        // Operador de asignación
+        MemoryBlock& operator=(const MemoryBlock&) = default;
     };
 
-    // Obtener el estado actual de la memoria
+    // Inicializar el sistema de memoria
+    static void initialize();
+
+    // Obtener estado actual de la memoria
     static std::vector<std::string> getMemoryState();
 
-    // Procesar una petición (comando)
+    // Procesar comandos (Create, Set, Get, etc.)
     static std::string processRequest(const std::string& request);
 
 private:
-    // Estado de la memoria (simulación)
+    // Pool de memoria principal
+    static std::vector<char> memoryPool;
+
+    // Bloques asignados (mapeados por ID)
     static std::unordered_map<int, MemoryBlock> memoryBlocks;
 
-    // Contador para generar IDs únicos
+    // Bloques libres (lista de pares <offset, tamaño>)
+    static std::vector<std::pair<size_t, size_t>> freeBlocks;
+
+    // Contador para IDs
     static int nextId;
 
-    // Inicializar la memoria
-    static void initializeMemory();
-
-    // Funciones para manejar peticiones
+    // Funciones de manejo de comandos
     static std::string handleCreate(const std::string& size, const std::string& type);
     static std::string handleSet(int id, const std::string& value);
     static std::string handleGet(int id);
     static std::string handleIncreaseRefCount(int id);
     static std::string handleDecreaseRefCount(int id);
 
-    // Validar que el tamaño sea congruente con el tipo de dato
+    // Validación de tipos
     static bool validateSizeForType(const std::string& type, size_t size);
+
+    // Asignación de memoria
+    static bool allocateMemory(size_t size, MemoryBlock& block);
+
+    // Liberación de memoria
+    static void releaseMemory(int id);
+
+    // Helper para encontrar bloque por ID
+    static MemoryBlock* findBlock(int id);
 };
 
 #endif // MEMORYMANAGER_H
