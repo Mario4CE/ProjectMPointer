@@ -33,9 +33,6 @@
     <ClCompile Include="BtnEnvio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MPointers.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cliente.h">
