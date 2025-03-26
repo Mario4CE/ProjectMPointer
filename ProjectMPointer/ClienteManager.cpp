@@ -9,7 +9,10 @@
 
 void handleClient(SOCKET clientSocket) {
     char buffer[1024]; // Buffer para recibir datos
-    int bytesReceived; // N?mero de bytes recibidos
+    int bytesReceived; // Número de bytes recibidos
+
+    // Configurar el MemoryManager para enviar mensajes a este cliente
+    MemoryManager::getInstance().setClientSocket(clientSocket);
 
     while (true) {
         // Limpiar el buffer antes de recibir nuevos datos
@@ -29,18 +32,18 @@ void handleClient(SOCKET clientSocket) {
         std::string mensajeInfo = "Petición recibida: " + request;
         InfoLogger::logInfo(mensajeInfo);
 
-        // Procesar la petición
+        // Procesar la petición - ahora usará sendToClient internamente si es necesario
         std::string response = MemoryManager::processRequest(request);
 
-        // Enviar la respuesta al cliente
-        int bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
-        if (bytesSent == SOCKET_ERROR) {
+        // Enviar la respuesta final al cliente usando nuestra función mejorada
+        if (!sendToClient(clientSocket, response)) {
             std::string mensajeError = "Error al enviar la respuesta al cliente.";
             ErrorLogger::logError(mensajeError);
             break;
         }
-
     }
 
+    // Limpiar el socket del cliente al desconectarse
+    MemoryManager::getInstance().setClientSocket(INVALID_SOCKET);
     closesocket(clientSocket);
 }

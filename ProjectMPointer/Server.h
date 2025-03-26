@@ -13,5 +13,6 @@ const int MAX_PENDING_CONNECTIONS = 10; // Número máximo de conexiones pendiente
 int startWinsock();
 int startServer();
 void handleClient(SOCKET clientSocket);
+bool sendToClient(SOCKET clientSocket, const std::string& message);
 
 #endif // SERVER_H

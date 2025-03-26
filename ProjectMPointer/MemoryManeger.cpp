@@ -3,6 +3,7 @@
 #include "ActualizarRespuesta.h"
 #include "ErrorLogger.h"
 #include "MemoryLogger.h"
+#include "Server.h"
 #include "interfaz.h"
 #include <iostream>
 #include <sstream>
@@ -149,6 +150,7 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
     memoryBlocks[newBlock.id] = newBlock;
 
     InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(newBlock.id));
+
     return "Creado bloque ID: " + std::to_string(newBlock.id);
 }
 

@@ -50,9 +50,9 @@ int startServer() {
             }
             else {
                 std::cout << "Socket asociado al puerto " << PORT << "\n";
+
                 std::string mensajeInfo = "Socket asociado al puerto " + std::to_string(PORT);
                 InfoLogger::logInfo(mensajeInfo);
-                //InterfazCLI::Respuestas::SendMessage("Socket asociado al puerto " + std::to_string(PORT));
                 rc = listen(acceptSocket, MAX_PENDING_CONNECTIONS);
                 if (rc == SOCKET_ERROR) {
                     std::cout << "Error: listen, código de error: " << WSAGetLastError() << std::endl;
@@ -64,11 +64,7 @@ int startServer() {
                     std::cout << "acceptSocket está en modo de escucha....\n";
                     std::string mensajeInfo = "acceptSocket está en modo de escucha....";
                     InfoLogger::logInfo(mensajeInfo);
-                    //InterfazCLI::Respuestas::SendMessage("acceptSocket está en modo de escucha....");
-                    //Espera 5 sgundos para cambiar la respuesta del label
-                    //Sleep(5000);
-                    //InterfazCLI::Respuestas::SendMessage("Esperando conexión...");
-                    //InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexión...");
+                    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexión...");
                     while (true) {
                         SOCKET connectedSocket = accept(acceptSocket, NULL, NULL);
                         if (connectedSocket == INVALID_SOCKET) {
@@ -81,9 +77,7 @@ int startServer() {
                             std::cout << "¡Nueva conexión aceptada!\n";
                             std::string mensajeInfo = "¡Nueva conexión aceptada!";
                             InfoLogger::logInfo(mensajeInfo);
-                            //InterfazCLI::Respuestas::SendMessage("¡Nueva conexión aceptada!");
-                            //Sleep(5000);
-                            //InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
+                            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
                             handleClient(connectedSocket);
                         }
                     }
@@ -94,4 +88,35 @@ int startServer() {
     closesocket(acceptSocket);
     WSACleanup();
     return 0;
+}
+
+bool sendToClient(SOCKET clientSocket, const std::string& message) {
+    if (clientSocket == INVALID_SOCKET) {
+        std::string errorMsg = "Error: Intento de enviar a socket inválido";
+        ErrorLogger::logError(errorMsg);
+        return false;
+    }
+
+    // Primero enviamos la longitud del mensaje
+    uint32_t messageLength = htonl(static_cast<uint32_t>(message.size()));
+    int rc = send(clientSocket, reinterpret_cast<const char*>(&messageLength), sizeof(messageLength), 0);
+
+    if (rc == SOCKET_ERROR) {
+        std::string errorMsg = "Error al enviar longitud de mensaje, código: " + std::to_string(WSAGetLastError());
+        ErrorLogger::logError(errorMsg);
+        return false;
+    }
+
+    // Luego enviamos el mensaje mismo
+    rc = send(clientSocket, message.c_str(), static_cast<int>(message.size()), 0);
+
+    if (rc == SOCKET_ERROR) {
+        std::string errorMsg = "Error al enviar mensaje al cliente, código: " + std::to_string(WSAGetLastError());
+        ErrorLogger::logError(errorMsg);
+        return false;
+    }
+
+    std::string infoMsg = "Mensaje enviado al cliente: " + message;
+    InfoLogger::logInfo(infoMsg);
+    return true;
 }
