@@ -36,9 +36,6 @@
     <ClCompile Include="InfoLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ActualizarRespuesta.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="interfaz.h">
@@ -60,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="InfoLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActualizarRespuesta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

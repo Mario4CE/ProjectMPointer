@@ -10,6 +10,7 @@
 #include <vector>
 #include <variant>
 #include <string>
+#include <memory>
 
 // Inicializar variables estáticas
 std::vector<char> MemoryManager::memoryPool;
@@ -26,6 +27,11 @@ void MemoryManager::initialize() {
     std::cout << "Memoria inicializada con " << (TOTAL_MEMORY / (1024 * 1024)) << " MB." << std::endl;
 }
 
+/*
+* Metodo que obtiene el estado de la memoria
+* Se obtiene el estado de la memoria en un vector de strings
+* Se recorre el mapa de bloques de memoria y se obtiene la informacion de cada bloque
+*/
 std::vector<std::string> MemoryManager::getMemoryState() {
     std::vector<std::string> state;
     for (const auto& block : memoryBlocks) {
@@ -41,6 +47,14 @@ std::vector<std::string> MemoryManager::getMemoryState() {
     return state;
 }
 
+/*
+* Procesar comandos (Create, Set, Get, etc.)
+* Revisa si el comando es valido pata de esa manera procesarlo
+* Si el comando es correcto procede a realizar la accion solicitada
+* Si el comando no es correcto se lanza una excepcion, detalle importante es que el cliente hace una verificacion antes
+* pero se agrega una verificacion adicional en el servidor para evitar errores
+*/
+
 std::string MemoryManager::processRequest(const std::string& request) {
     if (memoryPool.empty()) {
         initialize();
@@ -51,32 +65,38 @@ std::string MemoryManager::processRequest(const std::string& request) {
     std::string command;
     iss >> command;
 
-    try {
+    try {//Se agrega el comando Create
         if (command == "Create") {
             std::string size, type;
             iss >> size >> type;
             return handleCreate(size, type);
-        }
+        }//Se agrega el comando Set
         else if (command == "Set") {
             int id;
             std::string value;
             iss >> id >> value;
             return handleSet(id, value);
-        }
+        }//Se agrega el comando Get
         else if (command == "Get") {
             int id;
             iss >> id;
             return handleGet(id);
-        }
+        }//Se agrega el comando IncreaseRefCount
         else if (command == "IncreaseRefCount") {
             int id;
             iss >> id;
             return handleIncreaseRefCount(id);
-        }
+        }//Se agrega el comando DecreaseRefCount
         else if (command == "DecreaseRefCount") {
             int id;
             iss >> id;
             return handleDecreaseRefCount(id);
+        }//Se agrega el comando Cerrar
+        else if (command == "Cerrar") {
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Cerrando servidor...");
+            //Se cierra la ventana del server
+            InterfazCLI::Respuestas::CerrarVentana();   
+            return "Cerrando servidor...";
         }
         else {
             throw std::invalid_argument("Comando no reconocido: " + command);
@@ -90,6 +110,7 @@ std::string MemoryManager::processRequest(const std::string& request) {
     }
 }
 
+// Validar que el tamaño sea congruente con el tipo de dato
 bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     if (type == "int") return size % sizeof(int) == 0;
     if (type == "double") return size % sizeof(double) == 0;
@@ -100,22 +121,27 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     throw std::invalid_argument("Tipo de dato no soportado: " + type);
 }
 
-// En handleCreate
+/*
+* Metodo que crea un bloque de memoria
+* Se crea un bloque de memoria con un tamaño y tipo de dato especifico
+* Se valida que el tamaño sea congruente con el tipo de dato
+*/
+
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
     size_t blockSize = std::stoul(size);
     if (!validateSizeForType(type, blockSize)) {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo");
-        InterfazCLI::Respuestas::SendMessage("Error: Tamaño incongruente con el tipo");
+        ErrorLogger::logError("Error: Tamaño incongruente con el tipo");
+        //InterfazCLI::Respuestas::SendMessage("Error: Tamaño incongruente con el tipo");
         return "Error: Tamaño incongruente con el tipo";
     }
 
     // Creación directa con constructor mejorado
     MemoryBlock newBlock(nextId++, blockSize, type);
 
-    // Asignar memoria (si aún necesitas esta función)
+    // Asignar memoria
     if (!allocateMemory(newBlock.size, newBlock)) {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: No hay espacio suficiente");
-        InterfazCLI::Respuestas::SendMessage("Error: No hay espacio suficiente");
         return "Error: No hay espacio suficiente";
     }
 
@@ -123,7 +149,6 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
     memoryBlocks[newBlock.id] = newBlock;
 
     InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(newBlock.id));
-    InterfazCLI::Respuestas::SendMessage("Creado bloque ID: " + std::to_string(newBlock.id));
     return "Creado bloque ID: " + std::to_string(newBlock.id);
 }
 

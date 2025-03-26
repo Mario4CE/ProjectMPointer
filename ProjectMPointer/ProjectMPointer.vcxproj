@@ -120,7 +120,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ActualizarRespuesta.h" />
     <ClCompile Include="ErrorLogger.cpp" />
     <ClCompile Include="InfoLogger.cpp" />
     <ClCompile Include="MemoryManeger.cpp" />
@@ -130,6 +129,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ActualizarRespuesta.h" />
     <ClInclude Include="ErrorLogger.h" />
     <ClInclude Include="InfoLogger.h" />
     <ClInclude Include="interfaz.h">
