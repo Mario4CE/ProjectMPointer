@@ -90,7 +90,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
         }
     }
     catch (const std::exception& e) {
-        respuesta = "Error: " + std::string(e.what());
+        respuesta = "Errorcito: " + std::string(e.what());
         this->lblRespuesta->ForeColor = System::Drawing::Color::Red;
     }
 

@@ -8,42 +8,34 @@
 #include "InfoLogger.h"
 
 void handleClient(SOCKET clientSocket) {
-    char buffer[1024]; // Buffer para recibir datos
-    int bytesReceived; // Número de bytes recibidos
+    char buffer[1024];
 
-    // Configurar el MemoryManager para enviar mensajes a este cliente
-    MemoryManager::getInstance().setClientSocket(clientSocket);
+    try {
+        while (true) {
+            memset(buffer, 0, sizeof(buffer));
+            int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
 
-    while (true) {
-        // Limpiar el buffer antes de recibir nuevos datos
-        memset(buffer, 0, sizeof(buffer));
+            if (bytesReceived <= 0) {
+                int error = WSAGetLastError();
+                if (error == WSAECONNRESET || error == WSAECONNABORTED) {
+                    InfoLogger::logInfo("Cliente cerró la conexión abruptamente");
+                }
+                break;
+            }
 
-        bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-        if (bytesReceived <= 0) {
-            std::cout << "Cliente desconectado o error en la recepción.\n";
-            std::string mensajeError = "Cliente desconectado o error en la recepción.";
-            ErrorLogger::logError(mensajeError);
-            break;
-        }
+            std::string request(buffer, bytesReceived);
+            std::string response = MemoryManager::processRequest(request);
 
-        // Convertir el buffer recibido a un string
-        std::string request(buffer, bytesReceived);
-        std::cout << "Petición recibida: " << request << std::endl;
-        std::string mensajeInfo = "Petición recibida: " + request;
-        InfoLogger::logInfo(mensajeInfo);
-
-        // Procesar la petición - ahora usará sendToClient internamente si es necesario
-        std::string response = MemoryManager::processRequest(request);
-
-        // Enviar la respuesta final al cliente usando nuestra función mejorada
-        if (!sendToClient(clientSocket, response)) {
-            std::string mensajeError = "Error al enviar la respuesta al cliente.";
-            ErrorLogger::logError(mensajeError);
-            break;
+            if (!sendToClient(clientSocket, response)) {
+                break; // Si falla el envío, salir del bucle
+            }
         }
     }
+    catch (...) {
+        ErrorLogger::logError("Excepción en handleClient");
+    }
 
-    // Limpiar el socket del cliente al desconectarse
-    MemoryManager::getInstance().setClientSocket(INVALID_SOCKET);
+    // Cierre limpio
+    shutdown(clientSocket, SD_BOTH);
     closesocket(clientSocket);
 }

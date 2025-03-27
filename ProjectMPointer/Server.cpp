@@ -92,31 +92,36 @@ int startServer() {
 
 bool sendToClient(SOCKET clientSocket, const std::string& message) {
     if (clientSocket == INVALID_SOCKET) {
-        std::string errorMsg = "Error: Intento de enviar a socket inválido";
-        ErrorLogger::logError(errorMsg);
+        ErrorLogger::logError("Intento de enviar a socket inválido");
         return false;
     }
 
-    // Primero enviamos la longitud del mensaje
+    // Verificar si el socket sigue conectado
+    fd_set writefds;
+    FD_ZERO(&writefds);
+    FD_SET(clientSocket, &writefds);
+    timeval timeout = { 1, 0 }; // Timeout de 1 segundo
+
+    if (select(0, NULL, &writefds, NULL, &timeout) <= 0) {
+        ErrorLogger::logError("Socket no está listo para escritura o error de conexión");
+        return false;
+    }
+
+    // Resto de tu implementación de envío...
     uint32_t messageLength = htonl(static_cast<uint32_t>(message.size()));
     int rc = send(clientSocket, reinterpret_cast<const char*>(&messageLength), sizeof(messageLength), 0);
 
     if (rc == SOCKET_ERROR) {
-        std::string errorMsg = "Error al enviar longitud de mensaje, código: " + std::to_string(WSAGetLastError());
-        ErrorLogger::logError(errorMsg);
+        int error = WSAGetLastError();
+        ErrorLogger::logError("Error al enviar longitud: " + std::to_string(error));
         return false;
     }
 
-    // Luego enviamos el mensaje mismo
-    rc = send(clientSocket, message.c_str(), static_cast<int>(message.size()), 0);
-
+    rc = send(clientSocket, message.c_str(), message.size(), 0);
     if (rc == SOCKET_ERROR) {
-        std::string errorMsg = "Error al enviar mensaje al cliente, código: " + std::to_string(WSAGetLastError());
-        ErrorLogger::logError(errorMsg);
+        ErrorLogger::logError("Error al enviar mensaje: " + std::to_string(WSAGetLastError()));
         return false;
     }
 
-    std::string infoMsg = "Mensaje enviado al cliente: " + message;
-    InfoLogger::logInfo(infoMsg);
     return true;
 }
