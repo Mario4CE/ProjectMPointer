@@ -67,7 +67,6 @@ public:
     MemoryManager() : clientSocket(INVALID_SOCKET) {}
 
     // Métodos privados
-    static std::string processRequest(const std::string& request);
     static std::string handleCreate(const std::string& size, const std::string& type);
     static std::string handleSet(int id, const std::string& value);
     static std::string handleGet(int id);

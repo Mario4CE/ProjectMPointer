@@ -1,7 +1,7 @@
 #include "ClienteManager.h"
 #include "Server.h"
 #include "MemoryManager.h"
-#include "interfaz.h"
+#include "Interfaz.h"
 #include <iostream>
 #include <string>
 #include "ErrorLogger.h"
@@ -27,7 +27,8 @@ void handleClient(SOCKET clientSocket) {
             std::string response = MemoryManager::processRequest(request);
 
             if (!sendToClient(clientSocket, response)) {
-                break; // Si falla el envío, salir del bucle
+                ErrorLogger::logError("Error al enviar respuesta al cliente");
+                break; 
             }
         }
     }

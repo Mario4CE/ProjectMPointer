@@ -11,9 +11,9 @@ int startWinsock() {
 }
 
 int startServer() {
-    long rc;
-    SOCKET acceptSocket;
-    SOCKADDR_IN addr;
+    long rc = 0; // Initialize rc
+    SOCKET acceptSocket = INVALID_SOCKET; // Initialize acceptSocket
+    SOCKADDR_IN addr = {}; // Initialize addr
 
     rc = startWinsock();
     if (rc != 0) {
@@ -90,6 +90,8 @@ int startServer() {
     return 0;
 }
 
+
+
 bool sendToClient(SOCKET clientSocket, const std::string& message) {
     if (clientSocket == INVALID_SOCKET) {
         ErrorLogger::logError("Intento de enviar a socket inválido");
@@ -117,7 +119,7 @@ bool sendToClient(SOCKET clientSocket, const std::string& message) {
         return false;
     }
 
-    rc = send(clientSocket, message.c_str(), message.size(), 0);
+    rc = send(clientSocket, message.c_str(), static_cast<int>(message.size()), 0);
     if (rc == SOCKET_ERROR) {
         ErrorLogger::logError("Error al enviar mensaje: " + std::to_string(WSAGetLastError()));
         return false;

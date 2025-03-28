@@ -132,7 +132,7 @@
     <ClInclude Include="ActualizarRespuesta.h" />
     <ClInclude Include="ErrorLogger.h" />
     <ClInclude Include="InfoLogger.h" />
-    <ClInclude Include="interfaz.h">
+    <ClInclude Include="Interfaz.h">
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="MemoryLogger.h" />
@@ -141,8 +141,8 @@
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="interfaz.resx">
-      <DependentUpon>interfaz.h</DependentUpon>
+    <EmbeddedResource Include="Interfaz.resx">
+      <DependentUpon>Interfaz.h</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

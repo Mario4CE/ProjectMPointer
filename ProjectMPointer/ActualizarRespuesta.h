@@ -1,5 +1,5 @@
 
-#include "interfaz.h"
+#include "Interfaz.h"
 #include <Windows.h>
 #include <string>
 

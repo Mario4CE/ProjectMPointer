@@ -4,7 +4,7 @@
 #include "ErrorLogger.h"
 #include "MemoryLogger.h"
 #include "Server.h"
-#include "interfaz.h"
+#include "Interfaz.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -25,8 +25,12 @@ void MemoryManager::initialize() {
     freeBlocks.emplace_back(0, TOTAL_MEMORY);
     memoryBlocks.clear();
     nextId = 1;
-    std::cout << "Memoria inicializada con " << (TOTAL_MEMORY / (1024 * 1024)) << " MB." << std::endl;
+
+    // Use a larger type for the calculation to avoid overflow
+    size_t totalMemoryMB = TOTAL_MEMORY / (1024 * 1024);
+    std::cout << "Memoria inicializada con " << totalMemoryMB << " MB." << std::endl;
 }
+
 
 /*
 * Metodo que obtiene el estado de la memoria
@@ -305,4 +309,20 @@ bool MemoryManager::allocateMemory(size_t size, MemoryBlock& block) {
 
     // 4. Si no hay espacio suficiente
     return false;
+}
+
+void MemoryManager::releaseMemory(int id) {
+    auto it = memoryBlocks.find(id);
+    if (it != memoryBlocks.end()) {
+        // Decrease the reference count
+        it->second.refCount--;
+        if (it->second.refCount <= 0) {
+            // If reference count is zero, release the memory
+            freeBlocks.push_back({ it->second.size, it->second.id });
+            memoryBlocks.erase(it);
+        }
+    }
+    else {
+        throw std::runtime_error("Memory block not found");
+    }
 }
