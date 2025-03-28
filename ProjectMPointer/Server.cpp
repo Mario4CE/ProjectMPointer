@@ -5,11 +5,18 @@
 #include "InfoLogger.h"
 #include "ActualizarRespuesta.h"
 
+/*
+* Start Winsock
+*/
 int startWinsock() {
     WSADATA wsa;
     return WSAStartup(MAKEWORD(2, 0), &wsa);
 }
 
+/*
+* Función para manejar un cliente
+* Inicializa al server
+*/
 int startServer() {
     long rc = 0; // Initialize rc
     SOCKET acceptSocket = INVALID_SOCKET; // Initialize acceptSocket
@@ -90,8 +97,11 @@ int startServer() {
     return 0;
 }
 
-
-
+/*
+* Función para manejar un cliente
+* Se encarga de recibir los mensajes del cliente y procesarlos
+* Se encarga de enviar mensajes al cliente
+*/
 bool sendToClient(SOCKET clientSocket, const std::string& message) {
     if (clientSocket == INVALID_SOCKET) {
         ErrorLogger::logError("Intento de enviar a socket inválido");

@@ -27,7 +27,7 @@ void MemoryManager::initialize() {
     nextId = 1;
 
     // Use a larger type for the calculation to avoid overflow
-    size_t totalMemoryMB = TOTAL_MEMORY / (1024 * 1024);
+    size_t totalMemoryMB = static_cast<size_t>(TOTAL_MEMORY) / (1024 * 1024);
     std::cout << "Memoria inicializada con " << totalMemoryMB << " MB." << std::endl;
 }
 
