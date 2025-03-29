@@ -1,3 +1,4 @@
 # ProjectMPointer
 
-* USo de punteros en cpp
+* Uso de punteros en cpp
+* Y uso de memoria, operadores...
