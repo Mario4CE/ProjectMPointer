@@ -135,7 +135,7 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
     memoryBlocks[newBlock.id] = newBlock;
 
     // Imprimir la dirección de memoria del bloque creado
-    std::cout << "Bloque ID: " << newBlock.id << ", Dirección: " << (void*)(memoryPool + newBlock.offset) << ", Tamaño: " << newBlock.size << std::endl;
+    std::cout << "Bloque ID: " << newBlock.id << ", Dirección: " << (void*)(memoryPool + newBlock.offset) << ", Tamaño: " << newBlock.size << " bytes" << std::endl;
 
     InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(newBlock.id));
 

@@ -1,16 +1,28 @@
+
 #include "Server.h"
 #include "ClienteManager.h"
 #include "MemoryManager.h"
 #include "ErrorLogger.h"
 #include "InfoLogger.h"
 #include "ActualizarRespuesta.h"
+#include <thread> // Para manejar clientes en hilos separados
 
 /*
 * Start Winsock
 */
 int startWinsock() {
     WSADATA wsa;
-    return WSAStartup(MAKEWORD(2, 0), &wsa);
+    int result = WSAStartup(MAKEWORD(2, 2), &wsa);
+    if (result != 0) {
+        std::cout << "Error: startWinsock, código de error: " << result << std::endl;
+        ErrorLogger::logError("Error: startWinsock, código de error: " + std::to_string(result));
+        return 1;
+    }
+    else {
+        std::cout << "¡Winsock iniciado!\n";
+        InfoLogger::logInfo("¡Winsock iniciado!");
+        return 0;
+    }
 }
 
 /*
@@ -18,80 +30,74 @@ int startWinsock() {
 * Inicializa al server
 */
 int startServer() {
-    long rc = 0; // Initialize rc
-    SOCKET acceptSocket = INVALID_SOCKET; // Initialize acceptSocket
-    SOCKADDR_IN addr = {}; // Initialize addr
+    SOCKET acceptSocket = INVALID_SOCKET;
+    SOCKADDR_IN addr = {};
 
-    rc = startWinsock();
-    if (rc != 0) {
-        std::cout << "Error: startWinsock, código de error: " << WSAGetLastError() << std::endl;
-        std::string mensajeError = "Error: startWinsock, código de error: ";
-        ErrorLogger::logError(mensajeError);
+    if (startWinsock() != 0) {
+        return 1;
+    }
+
+    acceptSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (acceptSocket == INVALID_SOCKET) {
+        int error = WSAGetLastError();
+        std::cout << "Error: No se pudo crear el socket, código de error: " << error << std::endl;
+        ErrorLogger::logError("Error: No se pudo crear el socket, código de error: " + std::to_string(error));
+        WSACleanup();
         return 1;
     }
     else {
-        std::cout << "¡Winsock iniciado!\n";
-        std::string mensajeInfo = "¡Winsock iniciado!";
-        InfoLogger::logInfo(mensajeInfo);
-        acceptSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (acceptSocket == INVALID_SOCKET) {
-            std::cout << "Error: No se pudo crear el socket, código de error: " << WSAGetLastError() << std::endl;
-            std::string mensajeError = "Error: No se pudo crear el socket, código de error: ";
-            ErrorLogger::logError(mensajeError);
-            return 1;
+        std::cout << "¡Socket creado!\n";
+        InfoLogger::logInfo("¡Socket creado!");
+    }
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(acceptSocket, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN)) == SOCKET_ERROR) {
+        int error = WSAGetLastError();
+        std::cout << "Error: bind, código de error: " << error << std::endl;
+        ErrorLogger::logError("Error: bind, código de error: " + std::to_string(error));
+        closesocket(acceptSocket);
+        WSACleanup();
+        return 1;
+    }
+    else {
+        std::cout << "Socket asociado al puerto " << PORT << "\n";
+        InfoLogger::logInfo("Socket asociado al puerto " + std::to_string(PORT));
+    }
+
+    if (listen(acceptSocket, MAX_PENDING_CONNECTIONS) == SOCKET_ERROR) {
+        int error = WSAGetLastError();
+        std::cout << "Error: listen, código de error: " << error << std::endl;
+        ErrorLogger::logError("Error: listen, código de error: " + std::to_string(error));
+        closesocket(acceptSocket);
+        WSACleanup();
+        return 1;
+    }
+    else {
+        std::cout << "acceptSocket está en modo de escucha....\n";
+        InfoLogger::logInfo("acceptSocket está en modo de escucha....");
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexión...");
+    }
+
+    while (true) {
+        SOCKET connectedSocket = accept(acceptSocket, NULL, NULL);
+        if (connectedSocket == INVALID_SOCKET) {
+            int error = WSAGetLastError();
+            std::cout << "Error: accept, código de error: " << error << std::endl;
+            ErrorLogger::logError("Error: accept, código de error: " + std::to_string(error));
+            continue;
         }
         else {
-            std::cout << "¡Socket creado!\n";
-            std::string mensajeInfo = "¡Socket creado!";
-            InfoLogger::logInfo(mensajeInfo);
-            memset(&addr, 0, sizeof(SOCKADDR_IN));
-            addr.sin_family = AF_INET;
-            addr.sin_port = htons(PORT);
-            addr.sin_addr.s_addr = INADDR_ANY;
-            rc = bind(acceptSocket, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN));
-            if (rc == SOCKET_ERROR) {
-                std::cout << "Error: bind, código de error: " << WSAGetLastError() << std::endl;
-                std::string mensajeError = "Error: bind, codigo de error: ";
-                ErrorLogger::logError(mensajeError);
-                return 1;
-            }
-            else {
-                std::cout << "Socket asociado al puerto " << PORT << "\n";
-
-                std::string mensajeInfo = "Socket asociado al puerto " + std::to_string(PORT);
-                InfoLogger::logInfo(mensajeInfo);
-                rc = listen(acceptSocket, MAX_PENDING_CONNECTIONS);
-                if (rc == SOCKET_ERROR) {
-                    std::cout << "Error: listen, código de error: " << WSAGetLastError() << std::endl;
-                    std::string mensajeError = "Error: listen, código de error: ";
-                    ErrorLogger::logError(mensajeError);
-                    return 1;
-                }
-                else {
-                    std::cout << "acceptSocket está en modo de escucha....\n";
-                    std::string mensajeInfo = "acceptSocket está en modo de escucha....";
-                    InfoLogger::logInfo(mensajeInfo);
-                    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexión...");
-                    while (true) {
-                        SOCKET connectedSocket = accept(acceptSocket, NULL, NULL);
-                        if (connectedSocket == INVALID_SOCKET) {
-                            std::cout << "Error: accept, código de error: " << WSAGetLastError() << std::endl;
-                            std::string mensajeError = "Error: accept, código de error: ";
-                            ErrorLogger::logError(mensajeError);
-                            continue;
-                        }
-                        else {
-                            std::cout << "¡Nueva conexión aceptada!\n";
-                            std::string mensajeInfo = "¡Nueva conexión aceptada!";
-                            InfoLogger::logInfo(mensajeInfo);
-                            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
-                            handleClient(connectedSocket);
-                        }
-                    }
-                }
-            }
+            std::cout << "¡Nueva conexión aceptada!\n";
+            InfoLogger::logInfo("¡Nueva conexión aceptada!");
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
+            std::thread clientThread(handleClient, connectedSocket); // Manejar cada cliente en un hilo separado
+            clientThread.detach(); // Desvincular el hilo para que se ejecute independientemente
         }
     }
+
     closesocket(acceptSocket);
     WSACleanup();
     return 0;
@@ -116,6 +122,7 @@ bool sendToClient(SOCKET clientSocket, const std::string& message) {
 
     if (select(0, NULL, &writefds, NULL, &timeout) <= 0) {
         ErrorLogger::logError("Socket no está listo para escritura o error de conexión");
+        closesocket(clientSocket); // Cerrar el socket si la conexión está rota
         return false;
     }
 
@@ -126,12 +133,15 @@ bool sendToClient(SOCKET clientSocket, const std::string& message) {
     if (rc == SOCKET_ERROR) {
         int error = WSAGetLastError();
         ErrorLogger::logError("Error al enviar longitud: " + std::to_string(error));
+        closesocket(clientSocket); // Cerrar el socket si hay un error
         return false;
     }
 
     rc = send(clientSocket, message.c_str(), static_cast<int>(message.size()), 0);
     if (rc == SOCKET_ERROR) {
-        ErrorLogger::logError("Error al enviar mensaje: " + std::to_string(WSAGetLastError()));
+        int error = WSAGetLastError();
+        ErrorLogger::logError("Error al enviar mensaje: " + std::to_string(error));
+        closesocket(clientSocket); // Cerrar el socket si hay un error
         return false;
     }
 
