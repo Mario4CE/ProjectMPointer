@@ -27,7 +27,7 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
     }
 
     // Configurar un timeout de 5 segundos para recv
-    struct timeval timeout;
+    struct timeval timeout = { 0 }; // Initialize the struct
     timeout.tv_sec = 5; // 5 segundos
     timeout.tv_usec = 0;
     setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));

@@ -23,30 +23,26 @@ public:
     struct MemoryBlock {
         int id;
         size_t size;
-        std::string type;
+        size_t offset;
         int refCount;
-        std::vector<char> data;
+        std::string type;
 
-        MemoryBlock() : id(0), size(0), type(""), refCount(0) {}
-        MemoryBlock(int i, size_t s, const std::string& t)
-            : id(i), size(s), type(t), refCount(1), data(s) {
+        MemoryBlock() : id(0), size(0), offset(0), refCount(0), type("") {}
+        MemoryBlock(int i, size_t s, size_t o, const std::string& t)
+            : id(i), size(s), offset(o), refCount(1), type(t) {
         }
     };
 
-    // Constante como variable estática inline (C++17)
     static inline constexpr size_t TOTAL_MEMORY = 1024 * 1024 * 1024; // 1GB
 
-    // Método Singleton
     static MemoryManager& getInstance() {
-        static MemoryManager instance;  // Variable estática local (thread-safe en C++11)
+        static MemoryManager instance;
         return instance;
     }
 
-    // Eliminar operaciones de copia
     MemoryManager(const MemoryManager&) = delete;
     void operator=(const MemoryManager&) = delete;
 
-    // Métodos públicos
     void setClientSocket(SOCKET socket) { clientSocket = socket; }
     SOCKET getClientSocket() const { return clientSocket; }
     static std::string processRequest(const std::string& request);
@@ -54,19 +50,17 @@ public:
     static std::vector<std::string> getMemoryState();
 
 public:
-    // Miembros de instancia
     SOCKET clientSocket;
 
-    // Miembros estáticos (solo declaración, no definición)
-    static std::vector<char> memoryPool;
+    static char* memoryPool;
     static std::unordered_map<int, MemoryBlock> memoryBlocks;
     static std::vector<std::pair<size_t, size_t>> freeBlocks;
     static int nextId;
+    static size_t nextFree;
 
-    // Constructor privado
     MemoryManager() : clientSocket(INVALID_SOCKET) {}
 
-    // Métodos privados
+private:
     static std::string handleCreate(const std::string& size, const std::string& type);
     static std::string handleSet(int id, const std::string& value);
     static std::string handleGet(int id);
@@ -77,4 +71,5 @@ public:
     static void releaseMemory(int id);
     static MemoryBlock* findBlock(int id);
 };
+
 #endif // MEMORYMANAGER_H
