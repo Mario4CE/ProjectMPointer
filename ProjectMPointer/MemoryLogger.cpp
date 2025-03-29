@@ -6,6 +6,9 @@
 
 namespace fs = std::filesystem;
 
+/*
+* Guarda una petición en un archivo de logs
+*/
 void MemoryLogger::logRequest(const std::string& request) {
     // Crear la carpeta "logs" si no existe
     if (!fs::exists("logs/MemoryLog")) {
@@ -33,6 +36,9 @@ void MemoryLogger::logRequest(const std::string& request) {
     }
 }
 
+/*
+* Guarda el estado de la memoria en un archivo con fecha y hora
+*/
 void MemoryLogger::logMemoryState(const std::vector<std::string>& memoryState) {
     // Crear la carpeta "logs" si no existe
     if (!fs::exists("logs/MemoryLog")) {

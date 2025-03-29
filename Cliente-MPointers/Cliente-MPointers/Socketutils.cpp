@@ -9,6 +9,11 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+/*
+* Enviar una petición a un servidor remoto y recibir la respuesta.
+* address: Dirección IP del servidor.
+* port: Puerto del servidor.
+*/
 std::string SocketUtils::sendRequest(const std::string& address, int port, const std::string& request) {
     // Inicializar Winsock
     WSADATA wsaData;

@@ -7,6 +7,9 @@
 
 namespace fs = std::filesystem;
 
+/*
+* Metodo para registrar un mensaje de información o dato importante fuera de los errores y MemoryManager
+*/
 void InfoLogger::logInfo(const std::string& message) {
     // Mostrar el mensaje en la consola
     std::cout << "INFO: " << message << std::endl;

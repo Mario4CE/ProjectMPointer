@@ -7,6 +7,8 @@
 #include <vector>
 #include <sstream>
 
+//Metodo principal para enviar la peticion al servidor
+
 System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender, System::EventArgs^ e) {
     // Inicializar MPointer si no se ha hecho
     static bool initialized = false;

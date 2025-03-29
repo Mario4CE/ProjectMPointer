@@ -5,6 +5,8 @@
 
 namespace fs = std::filesystem;
 
+// Método para loggear un error
+
 void ErrorLogger::logError(const std::string& message) {
     // Mostrar el mensaje en la consola
     std::cerr << "ERROR: " << message << std::endl;

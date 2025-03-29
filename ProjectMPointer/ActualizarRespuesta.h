@@ -5,6 +5,8 @@
 
 using namespace System;
 
+// clase que se encarga de actualizar la respuesta en el formulario
+
 namespace InterfazCLI {
     public ref class Respuestas {
     private:
@@ -22,7 +24,7 @@ namespace InterfazCLI {
                 formulario->ActualizarRespuesta(textoCLI);
             }
         }
-        static void CerrarVentana() {
+        static void CerrarVentana() { //Metodo que cierra la ventana
             if (formulario != nullptr) {
                 formulario->CerrarVentana();
             }

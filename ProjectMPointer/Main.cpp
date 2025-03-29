@@ -12,6 +12,8 @@
 using namespace System;
 using namespace System::Windows::Forms;
 
+// Iniciar el servidor
+
 [STAThreadAttribute]
 int main(array<System::String^>^ args)
 {
@@ -21,7 +23,8 @@ int main(array<System::String^>^ args)
 
     InterfazCLI::Respuestas::SetFormulario(% formulario);
 
-    // Iniciar el servidor en un hilo separado
+    // Iniciar el servidor en un hilo separado para no bloquear la interfaz gráfica 
+
     std::thread serverThread([]() {
         std::cout << "Iniciando el servidor..." << std::endl;
         int resultado = startServer();
@@ -31,7 +34,7 @@ int main(array<System::String^>^ args)
         }
         });
 
-    // Desacoplar el hilo del servidor para que no bloquee la ejecución de la interfaz gráfica
+    // Desacoplar el hilo del servidor para que no bloquee la ejecución de la interfaz gráfica 
     serverThread.detach();
 
     // Iniciar la interfaz gráfica en el hilo principal

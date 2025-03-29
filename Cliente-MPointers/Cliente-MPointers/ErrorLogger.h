@@ -7,6 +7,9 @@
 #include <iomanip>
 #include <chrono>
 
+/*
+* Clase para registrar mensajes de error en un archivo log
+*/
 class ErrorLogger {
 public:
     // Registrar un mensaje de error

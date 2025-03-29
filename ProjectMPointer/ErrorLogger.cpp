@@ -5,6 +5,9 @@
 
 namespace fs = std::filesystem;
 
+/*
+* Metodo para loggear errores
+*/
 void ErrorLogger::logError(const std::string& message) {
     // Mostrar el mensaje en la consola
     std::cerr << "ERROR: " << message << std::endl;
@@ -31,6 +34,10 @@ void ErrorLogger::logError(const std::string& message) {
         ErrorLogger::logError(mensajeError);
     }
 }
+
+/*
+* Metodo para obtener la hora exacta
+*/
 
 std::string ErrorLogger::getCurrentTime() { //Metodo que obtiene la hora exacta
     auto now = std::chrono::system_clock::now();

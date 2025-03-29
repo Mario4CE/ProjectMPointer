@@ -10,6 +10,7 @@
 /*
 * Start Winsock
 */
+
 int startWinsock() {
     WSADATA wsa;
     int result = WSAStartup(MAKEWORD(2, 2), &wsa);
@@ -36,7 +37,7 @@ int startServer() {
     if (startWinsock() != 0) {
         return 1;
     }
-
+    // Crear el socket
     acceptSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (acceptSocket == INVALID_SOCKET) {
         int error = WSAGetLastError();
@@ -54,6 +55,8 @@ int startServer() {
     addr.sin_port = htons(PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
 
+    // Asociar el socket al puerto
+
     if (bind(acceptSocket, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN)) == SOCKET_ERROR) {
         int error = WSAGetLastError();
         std::cout << "Error: bind, código de error: " << error << std::endl;
@@ -66,6 +69,8 @@ int startServer() {
         std::cout << "Socket asociado al puerto " << PORT << "\n";
         InfoLogger::logInfo("Socket asociado al puerto " + std::to_string(PORT));
     }
+
+    // Poner el socket en modo de escucha
 
     if (listen(acceptSocket, MAX_PENDING_CONNECTIONS) == SOCKET_ERROR) {
         int error = WSAGetLastError();
@@ -80,6 +85,8 @@ int startServer() {
         InfoLogger::logInfo("acceptSocket está en modo de escucha....");
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexión...");
     }
+
+    // Aceptar conexiones entrantes
 
     while (true) {
         SOCKET connectedSocket = accept(acceptSocket, NULL, NULL);

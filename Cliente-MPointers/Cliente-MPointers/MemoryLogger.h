@@ -10,6 +10,10 @@
 #include <iostream>
 #include <chrono>
 
+/*
+* Clase que se encarga de guardar información en un archivo de logs
+* Informacion aparte de la de la info y error logger
+*/
 class MemoryLogger {
 public:
     // Guarda una petición en un archivo de logs
