@@ -29,12 +29,11 @@
 
 ## MemoryLogger.cpp
 - Basiamente tiene la logica para guardar la informacion de las ordenes que resive del cliente
-  
-## MemoryManager
-- Posee lalogica que sabe que hacer con los comandos que resive
-- Hace algunas validaciones para asegurarse qeu la informacion que se guarda y envia sea la correcta y evitar errores
 
-## mai.cpp
+##BtnEnvio.cpp
+-Encargado de enviar los comandos al server.
+
+## main.cpp
 -Metodo principal que inicializa el programa
 
 
