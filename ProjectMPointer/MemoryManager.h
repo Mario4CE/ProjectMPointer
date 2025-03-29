@@ -8,47 +8,68 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
-#include <cstring> // Para memcpy
+#include <cstring>
+#include <utility>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+typedef int SOCKET;
+const int INVALID_SOCKET = -1;
+#endif
 
 class MemoryManager {
 public:
-    // Tamaño de la memoria en MB
-    static const int SIZE_MB = 1024; // 1 GB de memoria (puedes cambiarlo)
-
-    // Estructura de un bloque de memoria
     struct MemoryBlock {
-        int id;                // Identificador único del bloque
-        size_t size;           // Tamaño del bloque en bytes
-        std::string type;      // Tipo de dato almacenado en el bloque
-        int refCount;          // Contador de referencias
-        std::vector<char> data; // Espacio de memoria reservado (simulado con un vector de bytes)
+        int id;
+        size_t size;
+        size_t offset;
+        int refCount;
+        std::string type;
+
+        MemoryBlock() : id(0), size(0), offset(0), refCount(0), type("") {}
+        MemoryBlock(int i, size_t s, size_t o, const std::string& t)
+            : id(i), size(s), offset(o), refCount(1), type(t) {
+        }
     };
 
-    // Obtener el estado actual de la memoria
+    static inline constexpr size_t TOTAL_MEMORY = 1024 * 1024 * 1024; // 1GB
+
+    static MemoryManager& getInstance() {
+        static MemoryManager instance;
+        return instance;
+    }
+
+    MemoryManager(const MemoryManager&) = delete;
+    void operator=(const MemoryManager&) = delete;
+
+    void setClientSocket(SOCKET socket) { clientSocket = socket; }
+    SOCKET getClientSocket() const { return clientSocket; }
+    static std::string processRequest(const std::string& request);
+    static void initialize();
     static std::vector<std::string> getMemoryState();
 
-    // Procesar una petición (comando)
-    static std::string processRequest(const std::string& request);
+public:
+    SOCKET clientSocket;
+
+    static char* memoryPool;
+    static std::unordered_map<int, MemoryBlock> memoryBlocks;
+    static std::vector<std::pair<size_t, size_t>> freeBlocks;
+    static int nextId;
+    static size_t nextFree;
+
+    MemoryManager() : clientSocket(INVALID_SOCKET) {}
 
 private:
-    // Estado de la memoria (simulación)
-    static std::unordered_map<int, MemoryBlock> memoryBlocks;
-
-    // Contador para generar IDs únicos
-    static int nextId;
-
-    // Inicializar la memoria
-    static void initializeMemory();
-
-    // Funciones para manejar peticiones
     static std::string handleCreate(const std::string& size, const std::string& type);
     static std::string handleSet(int id, const std::string& value);
     static std::string handleGet(int id);
     static std::string handleIncreaseRefCount(int id);
     static std::string handleDecreaseRefCount(int id);
-
-    // Validar que el tamaño sea congruente con el tipo de dato
     static bool validateSizeForType(const std::string& type, size_t size);
+    static bool allocateMemory(size_t size, MemoryBlock& block);
+    static void releaseMemory(int id);
+    static MemoryBlock* findBlock(int id);
 };
 
 #endif // MEMORYMANAGER_H

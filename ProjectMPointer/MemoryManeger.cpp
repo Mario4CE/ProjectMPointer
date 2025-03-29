@@ -2,25 +2,39 @@
 #include "MemoryManager.h"
 #include "ActualizarRespuesta.h"
 #include "ErrorLogger.h"
-#include "interfaz.h"
+#include "MemoryLogger.h"
+#include "Server.h"
+#include "Interfaz.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <variant>
+#include <string>
+#include <memory>
+#include <cstring> // Para memcpy
 
-
-// Inicializar el estado de la memoria
+// Inicializar variables estáticas
+char* MemoryManager::memoryPool = nullptr;
 std::unordered_map<int, MemoryManager::MemoryBlock> MemoryManager::memoryBlocks;
+std::vector<std::pair<size_t, size_t>> MemoryManager::freeBlocks;
 int MemoryManager::nextId = 1;
+size_t MemoryManager::nextFree = 0;
 
-// Inicializar la memoria
-void MemoryManager::initializeMemory() {
-    memoryBlocks.clear(); // Limpiar el estado de la memoria
-    nextId = 1; // Reiniciar el contador de IDs
-    std::cout << "Memoria inicializada con " << SIZE_MB << " MB." << std::endl;
+void MemoryManager::initialize() {
+    memoryPool = new char[TOTAL_MEMORY];
+    freeBlocks.clear();
+    freeBlocks.emplace_back(0, TOTAL_MEMORY);
+    memoryBlocks.clear();
+    nextId = 1;
+    nextFree = 0;
+
+    size_t totalMemoryMB = static_cast<size_t>(TOTAL_MEMORY) / (1024 * 1024);
+    std::cout << "Memoria inicializada con " << totalMemoryMB << " MB." << std::endl;
 }
-
-// Obtener el estado de la memoria
+/*
+* Esto es lo que se guarda cuando se ejecuta una orden
+*/
 std::vector<std::string> MemoryManager::getMemoryState() {
     std::vector<std::string> state;
     for (const auto& block : memoryBlocks) {
@@ -28,233 +42,194 @@ std::vector<std::string> MemoryManager::getMemoryState() {
         ss << "ID: " << block.second.id
             << ", Tamaño: " << block.second.size
             << ", Tipo: " << block.second.type
-            << ", RefCount: " << block.second.refCount;
+            << ", RefCount: " << block.second.refCount
+            << ", Offset: " << block.second.offset; // Usamos offset en lugar de dirección de datos
+        /*
+        * Offsets es la dirección de memoria donde comienza el bloque de memoria.
+        */
+
         state.push_back(ss.str());
     }
     return state;
 }
 
-// Procesar una petición
 std::string MemoryManager::processRequest(const std::string& request) {
-    // Inicializar la memoria si no está inicializada
-    if (memoryBlocks.empty()) {
-        initializeMemory();
+    if (memoryPool == nullptr) {
+        initialize();
     }
 
-    // Registrar la petición en el log de información
-    std::cout << "Petición recibida: " << request << std::endl;
-
-    // Procesar la petición
+    MemoryLogger::logRequest("CMD: " + request);
     std::istringstream iss(request);
     std::string command;
     iss >> command;
 
-    if (command == "Create") {
-        std::string size, type;
-        iss >> size >> type;
-        return handleCreate(size, type);
+    try {
+        if (command == "Create") {
+            std::string size, type;
+            iss >> size >> type;
+            return handleCreate(size, type);
+        }
+        else if (command == "Set") {
+            int id;
+            std::string value;
+            iss >> id >> value;
+            return handleSet(id, value);
+        }
+        else if (command == "Get") {
+            int id;
+            iss >> id;
+            return handleGet(id);
+        }
+        else if (command == "IncreaseRefCount") {
+            int id;
+            iss >> id;
+            return handleIncreaseRefCount(id);
+        }
+        else if (command == "DecreaseRefCount") {
+            int id;
+            iss >> id;
+            return handleDecreaseRefCount(id);
+        }
+        else if (command == "Cerrar") {
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Cerrando servidor...");
+            InterfazCLI::Respuestas::CerrarVentana();
+            return "Cerrando servidor...";
+        }
+        else {
+            throw std::invalid_argument("Comando no reconocido: " + command);
+        }
     }
-    else if (command == "Set") {
-        int id;
-        std::string value;
-        iss >> id >> value;
-        return handleSet(id, value);
-    }
-    else if (command == "Get") {
-        int id;
-        iss >> id;
-        return handleGet(id);
-    }
-    else if (command == "IncreaseRefCount") {
-        int id;
-        iss >> id;
-        return handleIncreaseRefCount(id);
-    }
-    else if (command == "DecreaseRefCount") {
-        int id;
-        iss >> id;
-        return handleDecreaseRefCount(id);
-    }
-    else {
-        std::string mensajeError = "Error: Comando no reconocido: " + command;
-        ErrorLogger::logError(mensajeError);
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Comando no reconocido: " + command);
-        std::cerr << "Error: Comando no reconocido: " << command << std::endl;
-        return "Error: Comando no reconocido";
+    catch (const std::exception& e) {
+        std::string errorMsg = "Error: " + std::string(e.what());
+        ErrorLogger::logError(errorMsg);
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario(errorMsg);
+        return errorMsg;
     }
 }
 
-// Validar que el tamaño sea congruente con el tipo de dato
 bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
-    if (type == "int") {
-        return size % sizeof(int) == 0; // El tamaño debe ser un múltiplo de sizeof(int)
-    }
-    else if (type == "double") {
-        return size % sizeof(double) == 0; // El tamaño debe ser un múltiplo de sizeof(double)
-    }
-    else if (type == "char") {
-        return size % sizeof(char) == 0; // El tamaño debe ser un múltiplo de sizeof(char)
-    }
-    else if (type == "float") {
-        return size % sizeof(float) == 0; // El tamaño debe ser un múltiplo de sizeof(float)
-    }
-    else if (type == "string" || type == "str") {
-        return true; // Para strings, cualquier tamaño es válido
-    }
-    else {
-        // Tipo no soportado
-        ErrorLogger::logError("Error: Tipo de dato no soportado: " + type);
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + type);
-        std::cerr << "Error: Tipo de dato no soportado: " << type << std::endl;
-        return "Error: Tipo de dato no soportado";
-        return false;
-    }
+    if (type == "int") return size % sizeof(int) == 0;
+    if (type == "double") return size % sizeof(double) == 0;
+    if (type == "char") return size % sizeof(char) == 0;
+    if (type == "float") return size % sizeof(float) == 0;
+    if (type == "string" || type == "str") return true;
+
+    throw std::invalid_argument("Tipo de dato no soportado: " + type);
 }
 
-// Manejar la creación de un bloque de memoria
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
     size_t blockSize = std::stoul(size);
-
-    // Validar que el tamaño sea congruente con el tipo de dato
     if (!validateSizeForType(type, blockSize)) {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo de dato: " + type);
-        ErrorLogger::logError("Error: Tamaño incongruente con el tipo de dato: " + type);
-        std::cerr << "Error: Tamaño incongruente con el tipo de dato: " << type << std::endl;
-        return "Error: Tamaño incongruente con el tipo de dato";
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo");
+        ErrorLogger::logError("Error: Tamaño incongruente con el tipo");
+        return "Error: Tamaño incongruente con el tipo";
     }
 
-    MemoryBlock block;
-    block.id = nextId++;
-    block.size = blockSize;
-    block.type = type;
-    block.refCount = 1;
+    MemoryBlock newBlock(nextId++, blockSize, 0, type); // Offset inicial es 0
 
-    // Reservar espacio en memoria (simulado con un vector de bytes)
-    block.data.resize(blockSize); // data es un std::vector<char>
+    if (!allocateMemory(newBlock.size, newBlock)) {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: No hay espacio suficiente");
+        return "Error: No hay espacio suficiente";
+    }
 
-    memoryBlocks[block.id] = block;
-    std::cout << "Creado bloque ID: " << block.id << std::endl;
-    return "Creado bloque ID: " + std::to_string(block.id);
+    memoryBlocks[newBlock.id] = newBlock;
+
+    // Imprimir la dirección de memoria del bloque creado
+    std::cout << "Bloque ID: " << newBlock.id << ", Dirección: " << (void*)(memoryPool + newBlock.offset) << ", Tamaño: " << newBlock.size << " bytes" << std::endl;
+
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(newBlock.id));
+
+    return "Creado bloque ID: " + std::to_string(newBlock.id);
 }
 
-// Manejar la asignación de un valor a un bloque de memoria
+MemoryManager::MemoryBlock* MemoryManager::findBlock(int id) {
+    auto it = memoryBlocks.find(id);
+    return (it != memoryBlocks.end()) ? &it->second : nullptr;
+}
+
 std::string MemoryManager::handleSet(int id, const std::string& value) {
-    if (memoryBlocks.find(id) == memoryBlocks.end()) {
+    auto blockPtr = findBlock(id);
+    if (!blockPtr) {
         std::string mensajeError = "Error: ID no encontrado: " + std::to_string(id);
         ErrorLogger::logError(mensajeError);
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
 
-    MemoryBlock& block = memoryBlocks[id];
-
-    // Convertir el valor a bytes y almacenarlo en el bloque de memoria
-    if (block.type == "int") {
-        int intValue = std::stoi(value);
-        std::memcpy(block.data.data(), &intValue, sizeof(int));
-    }
-    else if (block.type == "double") {
-        double doubleValue = std::stod(value);
-        std::memcpy(block.data.data(), &doubleValue, sizeof(double));
-    }
-    else if (block.type == "char") {
-        char charValue = value[0]; // Tomar el primer carácter
-        std::memcpy(block.data.data(), &charValue, sizeof(char));
-    }
-    else if (block.type == "float") {
-        float floatValue = std::stof(value);
-        std::memcpy(block.data.data(), &floatValue, sizeof(float));
-    }
-    else if (block.type == "string" || block.type == "str") {
-        // Para strings, almacenamos el contenido completo
-        if (block.data.size() < value.size()) {
-            block.data.resize(value.size());
-        }
-        std::memcpy(block.data.data(), value.data(), value.size());
-    }
-    else {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + block.type);
-        ErrorLogger::logError("Error: Tipo de dato no soportado: " + block.type);
-        std::cerr << "Error: Tipo de dato no soportado: " << block.type << std::endl;
-        return "Error: Tipo de dato no soportado";
+    if (value.size() > blockPtr->size) {
+        return "Error: El valor es demasiado grande para el bloque asignado.";
     }
 
-    std::cout << "Valor asignado al bloque ID: " << id << std::endl;
+    std::memcpy(memoryPool + blockPtr->offset, value.c_str(), value.size());
     return "Valor asignado al bloque ID: " + std::to_string(id);
 }
 
-// Manejar la obtención de un valor de un bloque de memoria
 std::string MemoryManager::handleGet(int id) {
-    if (memoryBlocks.find(id) == memoryBlocks.end()) {
+    auto blockPtr = findBlock(id);
+    if (!blockPtr) {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: ID no encontrado: " + std::to_string(id));
         ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
 
-    MemoryBlock& block = memoryBlocks[id];
-
-    // Convertir los bytes almacenados en el valor correspondiente
-    std::stringstream ss;
-    if (block.type == "int") {
-        int intValue;
-        std::memcpy(&intValue, block.data.data(), sizeof(int));
-        ss << intValue;
-    }
-    else if (block.type == "double") {
-        double doubleValue;
-        std::memcpy(&doubleValue, block.data.data(), sizeof(double));
-        ss << doubleValue;
-    }
-    else if (block.type == "char") {
-        char charValue;
-        std::memcpy(&charValue, block.data.data(), sizeof(char));
-        ss << charValue;
-    }
-    else if (block.type == "float") {
-        float floatValue;
-        std::memcpy(&floatValue, block.data.data(), sizeof(float));
-        ss << floatValue;
-    }
-    else if (block.type == "string" || block.type == "str") {
-        // Para strings, leemos directamente los datos almacenados
-        ss << std::string(block.data.begin(), block.data.end());
-    }
-    else {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + block.type);
-        ErrorLogger::logError("Error: Tipo de dato no soportado: " + block.type);
-        std::cerr << "Error: Tipo de dato no soportado: " << block.type << std::endl;
-        return "Error: Tipo de dato no soportado";
-    }
-
-    std::cout << "Valor obtenido del bloque ID: " << id << std::endl;
-    return "Valor en bloque ID " + std::to_string(id) + ": " + ss.str();
+    return std::string(memoryPool + blockPtr->offset, blockPtr->size);
 }
 
-// Manejar el incremento del contador de referencias
 std::string MemoryManager::handleIncreaseRefCount(int id) {
-    if (memoryBlocks.find(id) == memoryBlocks.end()) {
+    auto blockPtr = findBlock(id);
+    if (!blockPtr) {
         ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
-    memoryBlocks[id].refCount++;
+    blockPtr->refCount++;
     std::cout << "RefCount incrementado para bloque ID: " << id << std::endl;
     return "RefCount incrementado para bloque ID: " + std::to_string(id);
 }
 
-// Manejar el decremento del contador de referencias
 std::string MemoryManager::handleDecreaseRefCount(int id) {
-    if (memoryBlocks.find(id) == memoryBlocks.end()) {
+    auto blockPtr = findBlock(id);
+    if (!blockPtr) {
         ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
-    if (--memoryBlocks[id].refCount == 0) {
-        memoryBlocks.erase(id);
+    blockPtr->refCount--;
+    if (blockPtr->refCount == 0) {
+        releaseMemory(id);
         std::cout << "Bloque ID " << id << " liberado (refCount = 0)" << std::endl;
         return "Bloque ID " + std::to_string(id) + " liberado (refCount = 0)";
     }
     std::cout << "RefCount decrementado para bloque ID: " << id << std::endl;
     return "RefCount decrementado para bloque ID: " + std::to_string(id);
+}
+
+bool MemoryManager::allocateMemory(size_t size, MemoryBlock& block) {
+    for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it) {
+        if (it->second >= size) {
+            block.offset = it->first;
+            block.size = size;
+
+            if (it->second == size) {
+                freeBlocks.erase(it);
+            }
+            else {
+                it->first += size;
+                it->second -= size;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+void MemoryManager::releaseMemory(int id) {
+    auto blockPtr = findBlock(id);
+    if (!blockPtr) {
+        return;
+    }
+
+    freeBlocks.push_back({ blockPtr->offset, blockPtr->size });
+    memoryBlocks.erase(id);
 }

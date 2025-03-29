@@ -1,46 +1,42 @@
 #include "ClienteManager.h"
 #include "Server.h"
 #include "MemoryManager.h"
-#include "interfaz.h"
+#include "Interfaz.h"
 #include <iostream>
 #include <string>
 #include "ErrorLogger.h"
 #include "InfoLogger.h"
 
 void handleClient(SOCKET clientSocket) {
-    char buffer[1024]; // Buffer para recibir datos
-    int bytesReceived; // N?mero de bytes recibidos
+    char buffer[1024];
 
-    while (true) {
-        // Limpiar el buffer antes de recibir nuevos datos
-        memset(buffer, 0, sizeof(buffer));
+    try {
+        while (true) {
+            memset(buffer, 0, sizeof(buffer));
+            int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
 
-        bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-        if (bytesReceived <= 0) {
-            std::cout << "Cliente desconectado o error en la recepción.\n";
-            std::string mensajeError = "Cliente desconectado o error en la recepción.";
-            ErrorLogger::logError(mensajeError);
-            break;
+            if (bytesReceived <= 0) {
+                int error = WSAGetLastError();
+                if (error == WSAECONNRESET || error == WSAECONNABORTED) {
+                    InfoLogger::logInfo("Cliente cerró la conexión abruptamente");
+                }
+                break;
+            }
+
+            std::string request(buffer, bytesReceived);
+            std::string response = MemoryManager::processRequest(request);
+
+            if (!sendToClient(clientSocket, response)) {
+                ErrorLogger::logError("Error al enviar respuesta al cliente");
+                break; 
+            }
         }
-
-        // Convertir el buffer recibido a un string
-        std::string request(buffer, bytesReceived);
-        std::cout << "Petición recibida: " << request << std::endl;
-        std::string mensajeInfo = "Petición recibida: " + request;
-        InfoLogger::logInfo(mensajeInfo);
-
-        // Procesar la petición
-        std::string response = MemoryManager::processRequest(request);
-
-        // Enviar la respuesta al cliente
-        int bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
-        if (bytesSent == SOCKET_ERROR) {
-            std::string mensajeError = "Error al enviar la respuesta al cliente.";
-            ErrorLogger::logError(mensajeError);
-            break;
-        }
-
+    }
+    catch (...) {
+        ErrorLogger::logError("Excepción en handleClient");
     }
 
+    // Cierre limpio
+    shutdown(clientSocket, SD_BOTH);
     closesocket(clientSocket);
 }

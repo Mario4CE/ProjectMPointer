@@ -1,15 +1,15 @@
-#pragma once
-#include "interfaz.h"
+
+#include "Interfaz.h"
+#include <Windows.h>
 #include <string>
 
 using namespace System;
-
-// Clase que se encarga de llamar a la funcion de ActualizarRespuesta en el formulario principal
 
 namespace InterfazCLI {
     public ref class Respuestas {
     private:
         static InterfazCLI::FormularioPrincipal^ formulario;
+        static Object^ lockObject = gcnew Object();
 
     public:
         static void SetFormulario(InterfazCLI::FormularioPrincipal^ form) {
@@ -20,6 +20,11 @@ namespace InterfazCLI {
             if (formulario != nullptr) {
                 String^ textoCLI = gcnew String(texto.c_str());
                 formulario->ActualizarRespuesta(textoCLI);
+            }
+        }
+        static void CerrarVentana() {
+            if (formulario != nullptr) {
+                formulario->CerrarVentana();
             }
         }
     };

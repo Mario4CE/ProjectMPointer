@@ -1,5 +1,5 @@
 #include "Server.h"
-#include "interfaz.h"
+#include "Interfaz.h"
 #include "ClienteManager.h"
 #include "MemoryManager.h"
 #include "ErrorLogger.h"

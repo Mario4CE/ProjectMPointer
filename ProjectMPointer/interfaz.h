@@ -1,3 +1,4 @@
+
 #include <Windows.h>
 #pragma once
 
@@ -14,13 +15,22 @@ namespace InterfazCLI {
             InitializeComponent();
         }
 
-        // Método público para actualizar el texto de lblRespuesta
+        // M?todo p?blico para actualizar el texto de lblRespuesta
         void ActualizarRespuesta(System::String^ texto) {
             if (this->lblRespuesta->InvokeRequired) { // Verifica si se necesita invocar
                 this->lblRespuesta->Invoke(gcnew System::Action<System::String^>(this, &FormularioPrincipal::ActualizarRespuesta), texto);
             }
             else {
                 this->lblRespuesta->Text = texto;
+            }
+        }
+
+        void CerrarVentana() {
+            if (this->InvokeRequired) {
+                this->Invoke(gcnew System::Action(this, &FormularioPrincipal::CerrarVentana));
+            }
+            else {
+                this->Close();
             }
         }
 
@@ -52,7 +62,7 @@ namespace InterfazCLI {
             this->lblRespuesta->Name = L"lblRespuesta";
             this->lblRespuesta->Size = System::Drawing::Size(646, 248);
             this->lblRespuesta->TabIndex = 3;
-            this->lblRespuesta->Text = L"Respuesta del servidor aparecerá aquí.";
+            this->lblRespuesta->Text = L"Respuesta del servidor aparecen aqui.";
             this->lblRespuesta->TextAlign = System::Drawing::ContentAlignment::TopCenter;
             // 
             // FormularioPrincipal
@@ -63,6 +73,13 @@ namespace InterfazCLI {
             this->Name = L"FormularioPrincipal";
             this->Text = L"Servidor";
             this->TransparencyKey = System::Drawing::Color::Red;
+            //
+            // Bloqueo del redimensionamiento de la ventana
+            //
+            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+            this->MinimumSize = this->Size;
+            this->MaximumSize = this->Size;
+
             this->ResumeLayout(false);
             this->PerformLayout();
 
