@@ -32,7 +32,9 @@ void MemoryManager::initialize() {
     size_t totalMemoryMB = static_cast<size_t>(TOTAL_MEMORY) / (1024 * 1024);
     std::cout << "Memoria inicializada con " << totalMemoryMB << " MB." << std::endl;
 }
-
+/*
+* Esto es lo que se guarda cuando se ejecuta una orden
+*/
 std::vector<std::string> MemoryManager::getMemoryState() {
     std::vector<std::string> state;
     for (const auto& block : memoryBlocks) {
@@ -42,6 +44,9 @@ std::vector<std::string> MemoryManager::getMemoryState() {
             << ", Tipo: " << block.second.type
             << ", RefCount: " << block.second.refCount
             << ", Offset: " << block.second.offset; // Usamos offset en lugar de dirección de datos
+        /*
+        * Offsets es la dirección de memoria donde comienza el bloque de memoria.
+        */
 
         state.push_back(ss.str());
     }

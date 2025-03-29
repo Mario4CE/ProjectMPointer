@@ -139,6 +139,13 @@ namespace ClienteMPointers {
             this->Controls->Add(this->lblRespuesta);
             this->Name = L"Cliente";
             this->Text = L"Cliente";
+            //
+            //Bloquea el cambio de tamaño de la ventana
+            //
+            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+            this->MinimumSize = this->Size;
+            this->MaximumSize = this->Size;
+
             this->ResumeLayout(false);
             this->PerformLayout();
 

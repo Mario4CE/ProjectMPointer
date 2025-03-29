@@ -73,6 +73,13 @@ namespace InterfazCLI {
             this->Name = L"FormularioPrincipal";
             this->Text = L"Servidor";
             this->TransparencyKey = System::Drawing::Color::Red;
+            //
+            // Bloqueo del redimensionamiento de la ventana
+            //
+            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+            this->MinimumSize = this->Size;
+            this->MaximumSize = this->Size;
+
             this->ResumeLayout(false);
             this->PerformLayout();
 
