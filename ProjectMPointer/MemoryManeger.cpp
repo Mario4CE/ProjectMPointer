@@ -12,7 +12,7 @@
 #include <variant>
 #include <string>
 #include <memory>
-#include <cstring> // Para memcpy
+#include <cstring> 
 
 // Inicializar variables estáticas
 char* MemoryManager::memoryPool = nullptr;
@@ -20,6 +20,15 @@ std::unordered_map<int, MemoryManager::MemoryBlock> MemoryManager::memoryBlocks;
 std::vector<std::pair<size_t, size_t>> MemoryManager::freeBlocks;
 int MemoryManager::nextId = 1;
 size_t MemoryManager::nextFree = 0;
+
+/*
+* Metodo para inicializar la memoria
+* Inicializa la memoria con 1GB
+* Reinicia los bloques de memoria
+* Reinicia los bloques libres
+* Reinicia el ID
+* Pone todo en orden para empezar a trabajar
+*/
 
 void MemoryManager::initialize() {
     memoryPool = new char[TOTAL_MEMORY];
@@ -32,9 +41,12 @@ void MemoryManager::initialize() {
     size_t totalMemoryMB = static_cast<size_t>(TOTAL_MEMORY) / (1024 * 1024);
     std::cout << "Memoria inicializada con " << totalMemoryMB << " MB." << std::endl;
 }
+
 /*
 * Esto es lo que se guarda cuando se ejecuta una orden
+* Es lo que nos mantiene el registro de las peticiones
 */
+
 std::vector<std::string> MemoryManager::getMemoryState() {
     std::vector<std::string> state;
     for (const auto& block : memoryBlocks) {
@@ -43,15 +55,44 @@ std::vector<std::string> MemoryManager::getMemoryState() {
             << ", Tamaño: " << block.second.size
             << ", Tipo: " << block.second.type
             << ", RefCount: " << block.second.refCount
-            << ", Offset: " << block.second.offset; // Usamos offset en lugar de dirección de datos
-        /*
-        * Offsets es la dirección de memoria donde comienza el bloque de memoria.
-        */
+            << ", Offset: " << block.second.offset;
+
+        // Leer el valor almacenado en el bloque de memoria
+        if (block.second.type == "int") {
+            int value;
+            std::memcpy(&value, memoryPool + block.second.offset, sizeof(int));
+            ss << ", Dato: " << value;
+        }
+        else if (block.second.type == "double") {
+            double value;
+            std::memcpy(&value, memoryPool + block.second.offset, sizeof(double));
+            ss << ", Dato: " << value;
+        }
+        else if (block.second.type == "char") {
+            char value;
+            std::memcpy(&value, memoryPool + block.second.offset, sizeof(char));
+            ss << ", Dato: " << value;
+        }
+        else if (block.second.type == "float") {
+            float value;
+            std::memcpy(&value, memoryPool + block.second.offset, sizeof(float));
+            ss << ", Dato: " << value;
+        }
+        else if (block.second.type == "string" || block.second.type == "str") {
+            std::string value(memoryPool + block.second.offset, block.second.size);
+            ss << ", Dato: " << value;
+        }
 
         state.push_back(ss.str());
     }
     return state;
 }
+
+/*
+* Metodo para procesar una peticion
+* Este metodo resive la peticion del cliente y la procesa para lleamar al metodo correspondiente
+* y mostrar errores si es necesario
+*/
 
 std::string MemoryManager::processRequest(const std::string& request) {
     if (memoryPool == nullptr) {
@@ -107,6 +148,10 @@ std::string MemoryManager::processRequest(const std::string& request) {
     }
 }
 
+/*
+* Validacion de tamaño de bloque, tiene que ser coherente con el tipo, esto para ahorrar memoria
+*/
+
 bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     if (type == "int") return size % sizeof(int) == 0;
     if (type == "double") return size % sizeof(double) == 0;
@@ -116,6 +161,11 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
 
     throw std::invalid_argument("Tipo de dato no soportado: " + type);
 }
+
+/*
+* Metodo para crear un bloque de memoria
+* Es uno de los 5 metodos que resive del cliente
+*/
 
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
     size_t blockSize = std::stoul(size);
@@ -142,10 +192,10 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
     return "Creado bloque ID: " + std::to_string(newBlock.id);
 }
 
-MemoryManager::MemoryBlock* MemoryManager::findBlock(int id) {
-    auto it = memoryBlocks.find(id);
-    return (it != memoryBlocks.end()) ? &it->second : nullptr;
-}
+/*
+* Metodo para asignar un valor a un bloque de memoria
+* Es uno de los 5 metodos que resive del cliente
+*/
 
 std::string MemoryManager::handleSet(int id, const std::string& value) {
     auto blockPtr = findBlock(id);
@@ -156,13 +206,54 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
         return "Error: ID no encontrado";
     }
 
-    if (value.size() > blockPtr->size) {
-        return "Error: El valor es demasiado grande para el bloque asignado.";
+    if (blockPtr->type == "int") {
+        if (!validateDataType(blockPtr->type, value, sizeof(int))) {
+            return "Error: Tamaño de valor incorrecto para el tipo int.";
+        }
+        int intValue = std::stoi(value);
+        std::memcpy(memoryPool + blockPtr->offset, &intValue, sizeof(int));
+    }
+    else if (blockPtr->type == "double") {
+        if (!validateDataType(blockPtr->type, value, sizeof(double))) {
+            return "Error: Tamaño de valor incorrecto para el tipo double.";
+        }
+        double doubleValue = std::stod(value);
+        std::memcpy(memoryPool + blockPtr->offset, &doubleValue, sizeof(double));
+    }
+    else if (blockPtr->type == "char") {
+        if (!validateDataType(blockPtr->type, value, sizeof(char))) {
+            return "Error: Tamaño de valor incorrecto para el tipo char.";
+        }
+        char charValue = value[0];
+        std::memcpy(memoryPool + blockPtr->offset, &charValue, sizeof(char));
+    }
+    else if (blockPtr->type == "float") {
+        if (!validateDataType(blockPtr->type, value, sizeof(float))) {
+            return "Error: Tamaño de valor incorrecto para el tipo float.";
+        }
+        float floatValue = std::stof(value);
+        std::memcpy(memoryPool + blockPtr->offset, &floatValue, sizeof(float));
+    }
+    else if (blockPtr->type == "string" || blockPtr->type == "str") {
+        if (value.size() > blockPtr->size) {
+            return "Error: El valor es demasiado grande para el bloque asignado.";
+        }
+        std::memcpy(memoryPool + blockPtr->offset, value.c_str(), value.size());
+    }
+    else {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + blockPtr->type);
+        ErrorLogger::logError("Error: Tipo de dato no soportado: " + blockPtr->type);
+        std::cerr << "Error: Tipo de dato no soportado: " << blockPtr->type << std::endl;
+        return "Error: Tipo de dato no soportado";
     }
 
-    std::memcpy(memoryPool + blockPtr->offset, value.c_str(), value.size());
     return "Valor asignado al bloque ID: " + std::to_string(id);
 }
+
+/*
+* Metodo para obtener el valor de un bloque de memoria
+* Es uno de los 5 metodos que resive del cliente
+*/
 
 std::string MemoryManager::handleGet(int id) {
     auto blockPtr = findBlock(id);
@@ -173,8 +264,42 @@ std::string MemoryManager::handleGet(int id) {
         return "Error: ID no encontrado";
     }
 
-    return std::string(memoryPool + blockPtr->offset, blockPtr->size);
+    // Leer el valor almacenado en el bloque de memoria
+    if (blockPtr->type == "int") {
+        int value;
+        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(int));
+        return std::to_string(value);
+    }
+    else if (blockPtr->type == "double") {
+        double value;
+        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(double));
+        return std::to_string(value);
+    }
+    else if (blockPtr->type == "char") {
+        char value;
+        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(char));
+        return std::string(1, value);
+    }
+    else if (blockPtr->type == "float") {
+        float value;
+        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(float));
+        return std::to_string(value);
+    }
+    else if (blockPtr->type == "string" || blockPtr->type == "str") {
+        return std::string(memoryPool + blockPtr->offset, blockPtr->size);
+    }
+    else {
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + blockPtr->type);
+        ErrorLogger::logError("Error: Tipo de dato no soportado: " + blockPtr->type);
+        std::cerr << "Error: Tipo de dato no soportado: " << blockPtr->type << std::endl;
+        return "Error: Tipo de dato no soportado";
+    }
 }
+
+/*
+* Metodo para incrementar el contador de referencias de un bloque de memoria
+* Es uno de los 5 metodos que resive del cliente
+*/
 
 std::string MemoryManager::handleIncreaseRefCount(int id) {
     auto blockPtr = findBlock(id);
@@ -187,6 +312,11 @@ std::string MemoryManager::handleIncreaseRefCount(int id) {
     std::cout << "RefCount incrementado para bloque ID: " << id << std::endl;
     return "RefCount incrementado para bloque ID: " + std::to_string(id);
 }
+
+/*
+* Metodo para decrementar el contador de referencias de un bloque de memoria
+* Es uno de los 5 metodos que resive del cliente
+*/
 
 std::string MemoryManager::handleDecreaseRefCount(int id) {
     auto blockPtr = findBlock(id);
@@ -205,6 +335,9 @@ std::string MemoryManager::handleDecreaseRefCount(int id) {
     return "RefCount decrementado para bloque ID: " + std::to_string(id);
 }
 
+/*
+* Metodo para asignar memoria
+*/
 bool MemoryManager::allocateMemory(size_t size, MemoryBlock& block) {
     for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it) {
         if (it->second >= size) {
@@ -224,6 +357,10 @@ bool MemoryManager::allocateMemory(size_t size, MemoryBlock& block) {
     return false;
 }
 
+/*
+* Metodo para liberar memoria
+*/
+
 void MemoryManager::releaseMemory(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -232,4 +369,28 @@ void MemoryManager::releaseMemory(int id) {
 
     freeBlocks.push_back({ blockPtr->offset, blockPtr->size });
     memoryBlocks.erase(id);
+}
+
+/*
+Validacion que manda a hacer el metodo de Set
+*/
+bool MemoryManager::validateDataType(const std::string& blockType, const std::string& value, size_t expectedSize) {
+    if (blockType == "int" || blockType == "double" || blockType == "char" || blockType == "float") {
+        if (value.size() != expectedSize) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/*
+* Metodo para encontrar un bloque
+*/
+
+MemoryManager::MemoryBlock* MemoryManager::findBlock(int id) {
+    auto it = memoryBlocks.find(id);
+    if (it == memoryBlocks.end()) {
+        return nullptr;
+    }
+    return &it->second;
 }

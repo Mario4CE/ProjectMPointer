@@ -15,7 +15,8 @@ namespace InterfazCLI {
             InitializeComponent();
         }
 
-        // M?todo p?blico para actualizar el texto de lblRespuesta
+        // Metodo publico para actualizar el texto de lblRespuesta
+
         void ActualizarRespuesta(System::String^ texto) {
             if (this->lblRespuesta->InvokeRequired) { // Verifica si se necesita invocar
                 this->lblRespuesta->Invoke(gcnew System::Action<System::String^>(this, &FormularioPrincipal::ActualizarRespuesta), texto);
@@ -24,6 +25,7 @@ namespace InterfazCLI {
                 this->lblRespuesta->Text = texto;
             }
         }
+        // Metodo publico para cerrar la ventana, que es una de las ordenes adicionales que se pueden enviar al servidor
 
         void CerrarVentana() {
             if (this->InvokeRequired) {

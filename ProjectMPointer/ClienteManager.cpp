@@ -7,6 +7,10 @@
 #include "ErrorLogger.h"
 #include "InfoLogger.h"
 
+/*
+* Función para manejar un cliente
+* Recibe un socket de cliente y maneja las peticiones
+*/
 void handleClient(SOCKET clientSocket) {
     char buffer[1024];
 
