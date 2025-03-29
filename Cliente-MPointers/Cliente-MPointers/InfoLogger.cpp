@@ -8,6 +8,7 @@
 #include <fstream>
 
 namespace fs = std::filesystem;
+// Función para loggear información
 
 void InfoLogger::logInfo(const std::string& message) {
     // Mostrar el mensaje en la consola

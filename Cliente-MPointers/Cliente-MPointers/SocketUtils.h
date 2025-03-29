@@ -4,6 +4,7 @@
 #include <string>
 #include <stdexcept>
 
+// Clase de utilidades para sockets
 class SocketUtils {
 public:
     static std::string sendRequest(const std::string& address, int port, const std::string& request);

@@ -6,7 +6,9 @@
 #include <ctime>
 #include <iomanip>
 #include <chrono>
-
+ /*
+ * Clase para registrar mensajes de información
+ */
 class InfoLogger {
 public:
     // Registrar un mensaje de información

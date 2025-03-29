@@ -11,6 +11,11 @@
 #include "InfoLogger.h"
 
 template <typename T>
+/*
+* Clase MPointer
+* Representa un puntero inteligente que almacena un ID de un bloque de memoria en el servidor
+* y permite acceder a los valores almacenados en dicho bloque.
+*/
 class MPointer {
 public:
     // Constructor por defecto

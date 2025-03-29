@@ -1,9 +1,13 @@
-#include "MemoryLogger.h"
+﻿#include "MemoryLogger.h"
 #include "ErrorLogger.h"
 #include <filesystem> 
 #include <iostream>
 
 namespace fs = std::filesystem;
+/*
+* Clase que se encarga de guardar informaci�n en un archivo de logs
+* Informacion aparte de la de la info y error logger
+*/
 
 void MemoryLogger::logRequest(const std::string& request) {
     // Crear la carpeta "logs" si no existe
