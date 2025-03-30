@@ -220,9 +220,16 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 
     // Imprimir la dirección de memoria del bloque creado
     std::cout << "Bloque ID: " << newBlock.id << ", Dirección: " << (void*)(memoryPool + newBlock.offset) << ", Tamaño: " << newBlock.size << " bytes" << std::endl;
-
-    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(newBlock.id));
     
+    //Se actuliza ellabell del formulario mostrando el Bloque con el Id creado y abajo de eso el estado de la memoria
+    std::stringstream ss;
+    ss << "Bloque ID: " << newBlock.id
+        << ", Dirección: " << (void*)(memoryPool + newBlock.offset)
+        << ", Tamaño: " << newBlock.size << " bytes";
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario(ss.str());
+    std::vector<std::string> memoryState = getMemoryState();
+    MemoryLogger::logMemoryState(memoryState);
+
     getMemoryState();
 
     return "Creado bloque ID: " + std::to_string(newBlock.id);
