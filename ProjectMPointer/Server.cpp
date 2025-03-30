@@ -88,20 +88,36 @@ int startServer() {
 
     // Aceptar conexiones entrantes
 
+    // Aceptar conexiones entrantes
     while (true) {
         SOCKET connectedSocket = accept(acceptSocket, NULL, NULL);
         if (connectedSocket == INVALID_SOCKET) {
             int error = WSAGetLastError();
             std::cout << "Error: accept, código de error: " << error << std::endl;
             ErrorLogger::logError("Error: accept, código de error: " + std::to_string(error));
-            continue;
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error al aceptar conexión");
+            continue; // Continúa escuchando nuevas conexiones
         }
         else {
-            std::cout << "¡Nueva conexión aceptada!\n";
+            std::cout << "¡Nueva conexión aceptada!!!!!!\n";
             InfoLogger::logInfo("¡Nueva conexión aceptada!");
             InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
-            std::thread clientThread(handleClient, connectedSocket); // Manejar cada cliente en un hilo separado
-            clientThread.detach(); // Desvincular el hilo para que se ejecute independientemente
+
+            // Enviar mensaje al cliente
+            std::string mensajeBienvenida = "¡Bienvenido al servidor!";
+            if (!sendToClient(connectedSocket, mensajeBienvenida)) {
+                std::cout << "Error al enviar mensaje de bienvenida. Cerrando conexión.\n";
+                ErrorLogger::logError("Error al enviar mensaje de bienvenida. Cerrando conexión.");
+                closesocket(connectedSocket); // Cerrar el socket si falla el envío
+                continue; // Continúa escuchando nuevas conexiones
+            }
+            else {
+                std::cout << "Mensaje de bienvenida enviado.\n";
+                InfoLogger::logInfo("Mensaje de bienvenida enviado.");
+            }
+
+            std::thread clientThread(handleClient, connectedSocket);
+            clientThread.detach();
         }
     }
 

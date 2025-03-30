@@ -17,15 +17,6 @@ int main(array<System::String^>^ args) {
     // Crear y ejecutar la ventana del cliente
     ClienteMPointers::Cliente form;
 
-    // Intentar conectar al servidor y enviar una petición de prueba
-    try {
-        std::string response = SocketUtils::sendRequest("127.0.0.1", 12345, "Petición de prueba"); // Reemplaza con la IP y el puerto de tu servidor
-        std::cout << "Respuesta del servidor: " << response << std::endl;
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Error de conexión: " << e.what() << std::endl;
-    }
-
     Application::Run(% form);
 
     return 0;
