@@ -147,5 +147,8 @@ int MPointer<T>::serverPort = 0;
 // Instanciaciones explícitas para los tipos que usarás
 template class MPointer<int>;
 template class MPointer<double>;
+template class MPointer<char>;
+template class MPointer<std::string>;
+template class MPointer<float>;
 
 #endif // MPOINTER_H

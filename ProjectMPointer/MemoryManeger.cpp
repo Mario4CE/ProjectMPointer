@@ -13,6 +13,8 @@
 #include <string>
 #include <memory>
 #include <cstring> 
+#include <algorithm>
+
 
 // Inicializar variables estáticas
 char* MemoryManager::memoryPool = nullptr;
@@ -110,34 +112,49 @@ std::string MemoryManager::processRequest(const std::string& request) {
             iss >> size >> type;
             return handleCreate(size, type);
         }
+
         else if (command == "Set") {
             int id;
             std::string value;
             iss >> id >> value;
             return handleSet(id, value);
         }
+
         else if (command == "Get") {
             int id;
             iss >> id;
             return handleGet(id);
         }
+
         else if (command == "IncreaseRefCount") {
             int id;
             iss >> id;
             return handleIncreaseRefCount(id);
         }
+
         else if (command == "DecreaseRefCount") {
             int id;
             iss >> id;
             return handleDecreaseRefCount(id);
         }
+
+        else if (command == "Estado") {
+            std::vector<std::string> state = getMemoryState();
+            std::string response = "Estado de la memoria:\n";
+            for (const auto& s : state) {
+                response += s + "\n";
+            }
+            return response;
+        }
+
         else if (command == "Cerrar") {
             InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Cerrando servidor...");
             InterfazCLI::Respuestas::CerrarVentana();
             return "Cerrando servidor...";
         }
+
         else {
-            throw std::invalid_argument("Comando no reconocido: " + command);
+            throw std::invalid_argument("Comando no reconocido, su puta madre: " + command);
         }
     }
     catch (const std::exception& e) {
@@ -153,11 +170,25 @@ std::string MemoryManager::processRequest(const std::string& request) {
 */
 
 bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
-    if (type == "int") return size % sizeof(int) == 0;
-    if (type == "double") return size % sizeof(double) == 0;
-    if (type == "char") return size % sizeof(char) == 0;
-    if (type == "float") return size % sizeof(float) == 0;
-    if (type == "string" || type == "str") return true;
+    std::string lowerType = type;
+    std::transform(lowerType.begin(), lowerType.end(), lowerType.begin(), ::tolower); // Convertir a minúsculas
+
+    static const std::unordered_map<std::string, size_t> typeSizes = {
+        {"int", sizeof(int)},
+        {"double", sizeof(double)},
+        {"char", sizeof(char)},
+        {"float", sizeof(float)}
+    };
+
+    auto it = typeSizes.find(lowerType);
+    if (it != typeSizes.end()) {
+        return size != 0 && size % it->second == 0; // Corrección: Verificar si es múltiplo y no cero
+    }
+
+    if (lowerType == "string" || lowerType == "str") {
+        return true; // Para string, solo validamos que el tipo sea correcto.
+        // Opcional: Puedes agregar validación basada en la longitud máxima de la cadena si es necesario.
+    }
 
     throw std::invalid_argument("Tipo de dato no soportado: " + type);
 }
@@ -169,6 +200,8 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
 
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
     size_t blockSize = std::stoul(size);
+
+    // Validar el tamaño del bloque
     if (!validateSizeForType(type, blockSize)) {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tamaño incongruente con el tipo");
         ErrorLogger::logError("Error: Tamaño incongruente con el tipo");
@@ -177,6 +210,7 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 
     MemoryBlock newBlock(nextId++, blockSize, 0, type); // Offset inicial es 0
 
+    // Asignar memoria con el tamaño proporcionado por el cliente
     if (!allocateMemory(newBlock.size, newBlock)) {
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: No hay espacio suficiente");
         return "Error: No hay espacio suficiente";
@@ -186,8 +220,17 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 
     // Imprimir la dirección de memoria del bloque creado
     std::cout << "Bloque ID: " << newBlock.id << ", Dirección: " << (void*)(memoryPool + newBlock.offset) << ", Tamaño: " << newBlock.size << " bytes" << std::endl;
+    
+    //Se actuliza ellabell del formulario mostrando el Bloque con el Id creado y abajo de eso el estado de la memoria
+    std::stringstream ss;
+    ss << "Bloque ID: " << newBlock.id
+        << ", Dirección: " << (void*)(memoryPool + newBlock.offset)
+        << ", Tamaño: " << newBlock.size << " bytes";
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario(ss.str());
+    std::vector<std::string> memoryState = getMemoryState();
+    MemoryLogger::logMemoryState(memoryState);
 
-    InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Creado bloque ID: " + std::to_string(newBlock.id));
+    getMemoryState();
 
     return "Creado bloque ID: " + std::to_string(newBlock.id);
 }
@@ -375,7 +418,7 @@ void MemoryManager::releaseMemory(int id) {
 Validacion que manda a hacer el metodo de Set
 */
 bool MemoryManager::validateDataType(const std::string& blockType, const std::string& value, size_t expectedSize) {
-    if (blockType == "int" || blockType == "double" || blockType == "char" || blockType == "float") {
+    if (blockType == "int" || blockType == "double" || blockType == "char" || blockType == "float" || blockType == "string") {
         if (value.size() != expectedSize) {
             return false;
         }

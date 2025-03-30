@@ -3,6 +3,8 @@
 
 #include <msclr/gcroot.h>
 #include "MPointer.h"
+#include "SocketUtils.h" // Incluir SocketUtils
+#include <iostream> // Incluir iostream para mensajes de depuración
 
 namespace ClienteMPointers {
     using namespace System;
@@ -14,6 +16,11 @@ namespace ClienteMPointers {
         MPointer<double>* mptrDouble;
         MPointer<float>* mptrFloat;
         MPointer<std::string>* mptrStr;
+    private: System::Windows::Forms::Button^ BtnConectar;
+           MPointer<char>* mptrChar;
+
+           // Variable para rastrear el estado de la conexión
+           bool conectado;
 
     public:
         Cliente(void) {
@@ -25,12 +32,9 @@ namespace ClienteMPointers {
             mptrFloat = new MPointer<float>();
             mptrStr = new MPointer<std::string>();
 
-            // Configuración del servidor
-            MPointer<int>::Init("127.0.0.1", 12345);
-            MPointer<double>::Init("127.0.0.1", 12345);
-            MPointer<float>::Init("127.0.0.1", 12345);
-            MPointer<std::string>::Init("127.0.0.1", 12345);
-
+            // Inicialmente no conectado
+            conectado = false;
+            BtnConectar->Enabled = !conectado; // Habilitar solo si no está conectado
         }
 
     protected:
@@ -51,7 +55,10 @@ namespace ClienteMPointers {
                 delete mptrStr;
                 mptrStr = nullptr;
             }
-
+            if (mptrChar != nullptr) {
+                delete mptrChar;
+                mptrChar = nullptr;
+            }
         }
 
     private:
@@ -80,10 +87,11 @@ namespace ClienteMPointers {
             this->txtPeticion = (gcnew System::Windows::Forms::TextBox());
             this->lblRespuesta = (gcnew System::Windows::Forms::Label());
             this->lblTitle = (gcnew System::Windows::Forms::Label());
+            this->BtnConectar = (gcnew System::Windows::Forms::Button());
             this->SuspendLayout();
-            // 
+            //
             // btnCliente
-            // 
+            //
             this->btnCliente->BackColor = System::Drawing::SystemColors::InactiveCaption;
             this->btnCliente->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
@@ -94,18 +102,18 @@ namespace ClienteMPointers {
             this->btnCliente->Text = L"Enviar Petición";
             this->btnCliente->UseVisualStyleBackColor = false;
             this->btnCliente->Click += gcnew System::EventHandler(this, &Cliente::btnCliente_Click);
-            // 
+            //
             // txtPeticion
-            // 
+            //
             this->txtPeticion->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->txtPeticion->Location = System::Drawing::Point(44, 97);
             this->txtPeticion->Name = L"txtPeticion";
             this->txtPeticion->Size = System::Drawing::Size(290, 50);
             this->txtPeticion->TabIndex = 1;
-            // 
+            //
             // lblRespuesta
-            // 
+            //
             this->lblRespuesta->BackColor = System::Drawing::Color::LightGray;
             this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 21.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
@@ -115,41 +123,73 @@ namespace ClienteMPointers {
             this->lblRespuesta->TabIndex = 2;
             this->lblRespuesta->Text = L"Respuesta del servidor aparecerá aquí.";
             this->lblRespuesta->TextAlign = System::Drawing::ContentAlignment::TopCenter;
-            // 
+            //
             // lblTitle
-            // 
+            //
             this->lblTitle->AutoSize = true;
             this->lblTitle->BackColor = System::Drawing::SystemColors::InactiveCaption;
             this->lblTitle->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->lblTitle->Location = System::Drawing::Point(199, 20);
             this->lblTitle->Name = L"lblTitle";
-            this->lblTitle->Size = System::Drawing::Size(379, 42);
+            this->lblTitle->Size = System::Drawing::Size(356, 42);
             this->lblTitle->TabIndex = 3;
-            this->lblTitle->Text = L"Servidor de MPointers";
-            // 
+            this->lblTitle->Text = L"Cliente de MPointers\r\n";
+            this->lblTitle->Click += gcnew System::EventHandler(this, &Cliente::lblTitle_Click);
+            //
+            // BtnConectar
+            //
+            this->BtnConectar->BackColor = System::Drawing::SystemColors::WindowFrame;
+            this->BtnConectar->Font = (gcnew System::Drawing::Font(L"Arial", 21.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(0)));
+            this->BtnConectar->Location = System::Drawing::Point(560, 292);
+            this->BtnConectar->Name = L"BtnConectar";
+            this->BtnConectar->Size = System::Drawing::Size(164, 70);
+            this->BtnConectar->TabIndex = 4;
+            this->BtnConectar->Text = L"Conectar";
+            this->BtnConectar->UseVisualStyleBackColor = false;
+            this->BtnConectar->Click += gcnew System::EventHandler(this, &Cliente::BtnConectar_Click); // Agregar manejador de eventos
+            //
             // Cliente
-            // 
+            //
             this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
             this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
             this->ClientSize = System::Drawing::Size(771, 374);
+            this->Controls->Add(this->BtnConectar);
             this->Controls->Add(this->lblTitle);
             this->Controls->Add(this->btnCliente);
             this->Controls->Add(this->txtPeticion);
             this->Controls->Add(this->lblRespuesta);
+            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+            this->MaximumSize = this->Size;
+            this->MinimumSize = this->Size;
             this->Name = L"Cliente";
             this->Text = L"Cliente";
-            //
-            //Bloquea el cambio de tamaño de la ventana
-            //
-            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
-            this->MinimumSize = this->Size;
-            this->MaximumSize = this->Size;
-
             this->ResumeLayout(false);
             this->PerformLayout();
-
         }
 #pragma endregion
+    private: System::Void lblTitle_Click(System::Object^ sender, System::EventArgs^ e) {
+    }
+
+    private: System::Void BtnConectar_Click(System::Object^ sender, System::EventArgs^ e) {
+        if (!conectado) {
+            try {
+                // Intentar conectar al servidor
+                std::string respuesta = SocketUtils::sendRequest("127.0.0.1", 12345, "Conectar"); // Enviar petición de conexión
+                conectado = true;
+                BtnConectar->Enabled = false; // Deshabilitar el botón después de conectar
+                lblRespuesta->Text = gcnew System::String(respuesta.c_str()); // Mostrar respuesta
+                lblRespuesta->ForeColor = System::Drawing::Color::Black; // Color de texto normal
+                std::cout << "Conexión exitosa: " << respuesta << std::endl; // Mensaje de depuración
+            }
+            catch (const std::exception& ex) {
+                // Manejar errores de conexión
+                lblRespuesta->Text = gcnew System::String(("Error de conexión: " + std::string(ex.what())).c_str());
+                lblRespuesta->ForeColor = System::Drawing::Color::Red; // Color de texto rojo para errores
+                std::cerr << "Error de conexión: " << ex.what() << std::endl; // Mensaje de depuración
+            }
+        }
+    }
     };
 }
