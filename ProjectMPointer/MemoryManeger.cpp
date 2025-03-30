@@ -112,27 +112,32 @@ std::string MemoryManager::processRequest(const std::string& request) {
             iss >> size >> type;
             return handleCreate(size, type);
         }
+
         else if (command == "Set") {
             int id;
             std::string value;
             iss >> id >> value;
             return handleSet(id, value);
         }
+
         else if (command == "Get") {
             int id;
             iss >> id;
             return handleGet(id);
         }
+
         else if (command == "IncreaseRefCount") {
             int id;
             iss >> id;
             return handleIncreaseRefCount(id);
         }
+
         else if (command == "DecreaseRefCount") {
             int id;
             iss >> id;
             return handleDecreaseRefCount(id);
         }
+
         else if (command == "Estado") {
             std::vector<std::string> state = getMemoryState();
             std::string response = "Estado de la memoria:\n";
@@ -141,11 +146,13 @@ std::string MemoryManager::processRequest(const std::string& request) {
             }
             return response;
         }
+
         else if (command == "Cerrar") {
             InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Cerrando servidor...");
             InterfazCLI::Respuestas::CerrarVentana();
             return "Cerrando servidor...";
         }
+
         else {
             throw std::invalid_argument("Comando no reconocido, su puta madre: " + command);
         }

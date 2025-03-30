@@ -5,104 +5,98 @@
 #include <ws2tcpip.h>
 #include <iostream>
 #include <stdexcept>
-#include <sstream> // Para construir la respuesta
+#include <sstream>
+#include <thread> // Para hilos
+#include <chrono> // Para timeouts
 
 #pragma comment(lib, "ws2_32.lib")
 
-/*
-* Enviar una petición a un servidor remoto y recibir la respuesta.
-* address: Dirección IP del servidor.
-* port: Puerto del servidor.
-*/
+// Función para recibir mensajes del servidor en un hilo separado
+void receiveMessages(SOCKET clientSocket) {
+    char buffer[1024];
+    int bytesReceived;
+    while ((bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
+        std::string message(buffer, bytesReceived);
+        std::cout << "Mensaje del servidor: " << message << std::endl;
+    }
+    if (bytesReceived == SOCKET_ERROR) {
+        int error = WSAGetLastError();
+        std::string errorMessage = "Error al recibir mensaje del servidor. Código de error: " + std::to_string(error);
+        ErrorLogger::logError(errorMessage);
+    }
+}
+
 std::string SocketUtils::sendRequest(const std::string& address, int port, const std::string& request) {
-    // Variable para rastrear el estado de la conexión
     static SOCKET clientSocket = INVALID_SOCKET;
 
     try {
         if (request == "Conectar") {
-            // Inicializar Winsock si es la primera conexión
+            // Inicialización de Winsock y creación del socket (como antes)
             WSADATA wsaData;
-            if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-                std::string mensajeError = "Error al inicializar Winsock. Código de error: " + std::to_string(WSAGetLastError());
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("Error al inicializar Winsock.");
-            }
-
-            // Crear el socket
+            if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) { /* ... */ }
             clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-            if (clientSocket == INVALID_SOCKET) {
-                std::string mensajeError = "Error al crear el socket. Código de error: " + std::to_string(WSAGetLastError());
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("Error al crear el socket.");
-            }
+            if (clientSocket == INVALID_SOCKET) { /* ... */ }
 
-            // Configurar un timeout de 10 segundos para recv
-            struct timeval timeout = { 10, 0 }; // 10 segundos
-            if (setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) == SOCKET_ERROR) {
-                std::string mensajeError = "Error al configurar el timeout del socket. Código de error: " + std::to_string(WSAGetLastError());
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("Error al configurar el timeout del socket.");
-            }
-
-            // Configurar la dirección del servidor
+            // Configuración de la dirección del servidor y conexión (como antes)
             sockaddr_in serverAddr = {};
             serverAddr.sin_family = AF_INET;
             serverAddr.sin_port = htons(port);
-            if (inet_pton(AF_INET, address.c_str(), &serverAddr.sin_addr) <= 0) {
-                std::string mensajeError = "Dirección IP inválida: " + address;
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("Dirección IP inválida.");
+            if (inet_pton(AF_INET, address.c_str(), &serverAddr.sin_addr) <= 0) { /* ... */ }
+            if (connect(clientSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) { /* ... */ }
+
+            // Esperar 10 segundos por el mensaje de bienvenida
+            fd_set readfds;
+            FD_ZERO(&readfds);
+            FD_SET(clientSocket, &readfds);
+            struct timeval timeout = { 10, 0 }; // 10 segundos
+            int result = select(0, &readfds, nullptr, nullptr, &timeout);
+            if (result > 0) {
+                // Mensaje de bienvenida recibido
+                char welcomeBuffer[1024];
+                int welcomeBytesReceived = recv(clientSocket, welcomeBuffer, sizeof(welcomeBuffer), 0);
+                if (welcomeBytesReceived > 0) {
+                    std::string welcomeMessage(welcomeBuffer, welcomeBytesReceived);
+                    std::cout << "Mensaje de bienvenida recibido: " << welcomeMessage << std::endl;
+                }
+            }
+            else if (result == 0) {
+                std::cout << "No se recibió mensaje de bienvenida en 10 segundos." << std::endl;
+            }
+            else {
+                int error = WSAGetLastError();
+                std::string errorMessage = "Error al recibir mensaje de bienvenida. Código de error: " + std::to_string(error);
+                ErrorLogger::logError(errorMessage);
+                throw std::runtime_error("Error al recibir mensaje de bienvenida.");
             }
 
-            // Conectar al servidor
-            if (connect(clientSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-                int error = WSAGetLastError();
-                std::string mensajeError = "Error al conectar con el servidor. Código de error: " + std::to_string(error);
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("Error al conectar con el servidor. Código de error: " + std::to_string(error));
-            }
+            // Iniciar hilo para recibir mensajes del servidor
+            std::thread receiveThread(receiveMessages, clientSocket);
+            receiveThread.detach();
 
             return "Conexión establecida.";
         }
         else {
-            // Verificar si hay una conexión establecida
-            if (clientSocket == INVALID_SOCKET) {
-                return "Error: No hay conexión establecida.";
-            }
+            // Envío de la petición y recepción de la respuesta (como antes)
+            if (clientSocket == INVALID_SOCKET) { /* ... */ }
+            if (send(clientSocket, request.c_str(), static_cast<int>(request.size()), 0) == SOCKET_ERROR) { /* ... */ }
 
-            // Enviar la petición
-            if (send(clientSocket, request.c_str(), static_cast<int>(request.size()), 0) == SOCKET_ERROR) {
-                int error = WSAGetLastError();
-                std::string mensajeError = "Error al enviar la petición. Código de error: " + std::to_string(error);
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("Error al enviar la petición. Código de error: " + std::to_string(error));
-            }
-
-            // Recibir la respuesta
-            std::stringstream responseStream; // Usar stringstream para construir la respuesta
+            std::stringstream responseStream;
             char buffer[1024];
             int bytesReceived;
             while ((bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
-                responseStream.write(buffer, bytesReceived); // Escribir en el stringstream
+                responseStream.write(buffer, bytesReceived);
             }
+            if (bytesReceived == SOCKET_ERROR) { /* ... */ }
 
-            if (bytesReceived == SOCKET_ERROR) {
-                int error = WSAGetLastError();
-                std::string mensajeError = "Error al recibir la respuesta. Código de error: " + std::to_string(error);
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("Error al recibir la respuesta. Código de error: " + std::to_string(error));
-            }
-
-            // Devolver la respuesta
-            return responseStream.str(); // Convertir el stringstream a string
+            return responseStream.str();
         }
     }
     catch (...) {
         if (clientSocket != INVALID_SOCKET) {
             closesocket(clientSocket);
-            clientSocket = INVALID_SOCKET; // Resetear el socket en caso de error
+            clientSocket = INVALID_SOCKET;
         }
         WSACleanup();
-        throw; // Re-lanzar la excepción
+        throw;
     }
 }

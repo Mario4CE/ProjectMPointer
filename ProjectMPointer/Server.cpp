@@ -103,19 +103,16 @@ int startServer() {
             InfoLogger::logInfo("¡Nueva conexión aceptada!");
             InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
 
-            // Enviar mensaje al cliente
-            std::string mensajeBienvenida = "¡Bienvenido al servidor!";
+            // Enviar mensaje de bienvenida al cliente
+            std::string mensajeBienvenida = "¡Bienvenido al servidor!!!!!!!";
             if (!sendToClient(connectedSocket, mensajeBienvenida)) {
                 std::cout << "Error al enviar mensaje de bienvenida. Cerrando conexión.\n";
                 ErrorLogger::logError("Error al enviar mensaje de bienvenida. Cerrando conexión.");
                 closesocket(connectedSocket); // Cerrar el socket si falla el envío
                 continue; // Continúa escuchando nuevas conexiones
             }
-            else {
-                std::cout << "Mensaje de bienvenida enviado.\n";
-                InfoLogger::logInfo("Mensaje de bienvenida enviado.");
-            }
 
+            // Iniciar el hilo para manejar el cliente
             std::thread clientThread(handleClient, connectedSocket);
             clientThread.detach();
         }

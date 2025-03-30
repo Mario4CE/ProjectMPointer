@@ -8,7 +8,7 @@
 #include <sstream>
 #include <map>
 #include <variant>
-#include <stdexcept> // Para std::invalid_argument
+#include <stdexcept> 
 
 System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender, System::EventArgs^ e) {
     
@@ -27,23 +27,28 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
 
             if (tipo == "int") {
                 *mptrInt = MPointer<int>::New();
-                respuesta = "Nuevo MPointer<int> creado con ID: ";
+                respuesta = "Nuevo MPointer<int> creado ";
+                this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
             }
             else if (tipo == "double") {
                 *mptrDouble = MPointer<double>::New();
                 respuesta = "Nuevo MPointer<double> creado ";
+                this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
             }
             else if (tipo == "char") {
                 *mptrChar = MPointer<char>::New();
                 respuesta = "Nuevo MPointer<char> creado ";
+                this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
             }
             else if (tipo == "string") {
                 *mptrStr = MPointer<std::string>::New();
                 respuesta = "Nuevo MPointer<std::string> creado ";
+                this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
             }
             else if (tipo == "float") {
                 *mptrFloat = MPointer<float>::New();
                 respuesta = "Nuevo MPointer<float> creado ";
+                this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
             }
             else {
                 respuesta = "Tipo no soportado: " + tipo;
@@ -87,6 +92,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
             }
         }
     }
+
     catch (const std::exception& e) {
         respuesta = "Error: " + std::string(e.what());
         this->lblRespuesta->ForeColor = System::Drawing::Color::Red;
