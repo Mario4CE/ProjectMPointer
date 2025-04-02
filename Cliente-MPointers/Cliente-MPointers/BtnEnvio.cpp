@@ -21,14 +21,16 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
         std::string comando;
         iss >> comando;
 
-        if (comando == "New") {
+        if (comando == "Create") {
+            std::string entero;
+            iss >> entero;
             std::string tipo;
             iss >> tipo;
 
             if (tipo == "int") {
                 *mptrInt = MPointer<int>::New();
+                respuesta = "Nuevo MPointer<double> creado ";
                 this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
-                respuesta = "Nuevo MPointer<int> creado ";
             }
             else if (tipo == "double") {
                 *mptrDouble = MPointer<double>::New();
@@ -91,14 +93,8 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
 
         //Si el comando no es reconocido
         else {
-            if (conectado) {
-                respuesta = SocketUtils::sendRequest("127.0.0.1", 12345, peticionStr);
-                this->lblRespuesta->ForeColor = System::Drawing::Color::Black;
-            }
-            else {
-                respuesta = "Error: No hay conexión establecida. Intente conectar primero.";
-                this->lblRespuesta->ForeColor = System::Drawing::Color::Red;
-            }
+            respuesta = "Error: No hay conexión establecida. Intente conectar primero.";
+            this->lblRespuesta->ForeColor = System::Drawing::Color::Red;
         }
     }
 

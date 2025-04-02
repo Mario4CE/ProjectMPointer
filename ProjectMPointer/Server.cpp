@@ -117,7 +117,7 @@ int startServer() {
 */
 
 bool enviarComando(const std::string& message) {
-    SOCKET clientSocket = MemoryManager::getInstance().getClientSocket();
+    SOCKET clientSocket = 12345;
     std::cout << "Valor de clientSocket: " << clientSocket << std::endl;
     if (clientSocket == INVALID_SOCKET) {
         ErrorLogger::logError("Intento de enviar a socket inválido en enviar comando");
@@ -126,7 +126,7 @@ bool enviarComando(const std::string& message) {
     fd_set writefds;
     FD_ZERO(&writefds);
     FD_SET(clientSocket, &writefds);
-    timeval timeout = { 10, 0 };
+    timeval timeout = { 5, 0 };
     return sendToClient(clientSocket, message);
 }
 
@@ -151,7 +151,7 @@ bool sendToClient(SOCKET clientSocket, const std::string& message) {
     int result = select(0, NULL, &writefds, NULL, &timeout);
     if (result <= 0) { // Error o timeout
         int error = WSAGetLastError();
-        ErrorLogger::logError("❌ Socket no está listo para escritura. Código de error: " + std::to_string(error));
+        ErrorLogger::logError("❌ Socket no está listo para escritura... Código de error: " + std::to_string(error));
         closesocket(clientSocket); // Cerrar el socket para evitar errores futuros
         return false;
     }

@@ -219,7 +219,8 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
     // 4️⃣ Enviar mensaje de confirmación al cliente
     sendBlockCreationMessage(newBlock);
 
-    return "Bloque creado con ID: " + std::to_string(newBlock.id);
+    //Lo que se envia al cliente es el id del bloque
+    return std::to_string(newBlock.id);
 }
 
 /**
@@ -279,9 +280,11 @@ void MemoryManager::updateUIWithBlockInfo(const MemoryBlock& newBlock) {
  * 📤 Envía un mensaje al cliente con la información del bloque creado.
  */
 void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
-    SOCKET socket_fd = obtenerSocket();
+    SOCKET socket_fd = 12345;
+    int intentosMaximos = 2;
+    int intentos = 0;
     if (socket_fd == INVALID_SOCKET) {
-        ErrorLogger::logError("❌ Socket inválido, no se pudo enviar mensaje.");
+        ErrorLogger::logError("Socket inválido, no se pudo enviar mensaje.");
         return;
     }
 
@@ -289,21 +292,21 @@ void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
     fd_set writefds;
     FD_ZERO(&writefds);
     FD_SET(socket_fd, &writefds);
-    timeval timeout = { 10, 0 }; // 10 segundos
+    timeval timeout = { 5, 0 }; // 10 segundos
 
-    std::string mensaje = "Bloque creado con ID: " + std::to_string(newBlock.id);
+    std::string mensaje =std::to_string(newBlock.id);
 
-    int result = select(socket_fd + 1, nullptr, &writefds, nullptr, &timeout);
+    int result = select(socket_fd , nullptr, &writefds, nullptr, &timeout);
     if (result > 0 && FD_ISSET(socket_fd, &writefds)) {
         if (enviarComando(mensaje)) {
-            InfoLogger::logInfo("✅ Mensaje enviado correctamente.");
+            InfoLogger::logInfo("Mensaje enviado correctamente.");
         }
         else {
             ErrorLogger::logError("❌ Error al enviar mensaje al cliente.");
         }
     }
     else {
-        ErrorLogger::logError("❌ Timeout o error en select() al esperar escritura en el socket.");
+        ErrorLogger::logError("❌ Timeout o error en select() al esperar escritura en el socket ;(.");
     }
 }
 

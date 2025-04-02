@@ -17,7 +17,12 @@ void receiveMessages(SOCKET clientSocket) {
     int bytesReceived;
     while ((bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
         std::string message(buffer, bytesReceived);
-        std::cout << "Mensaje del servidor se mostrara a continuacion: " << message << std::endl;
+        fd_set writefds;
+        FD_ZERO(&writefds);
+        FD_SET(clientSocket, &writefds);
+        struct timeval timeout = { 8, 0 }; 
+        std::cout << "Mensaje del servidor se mostrara a continuacion viva: " << message << std::endl;
+
     }
     if (bytesReceived == SOCKET_ERROR) {
         int error = WSAGetLastError();
@@ -92,11 +97,11 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
                 // Continúa con la recepción de la respuesta a pesar del error de envío
             }
 
-            fd_set readfds;
-            FD_ZERO(&readfds);
-            FD_SET(clientSocket, &readfds);
-            struct timeval timeout = { 10, 0 };
-            int result = select(0, &readfds, nullptr, nullptr, &timeout);
+            fd_set writefds;
+            FD_ZERO(&writefds);
+            FD_SET(clientSocket, &writefds);
+            struct timeval timeout = { 15, 0 };
+            int result = select(0, &writefds, nullptr, nullptr, &timeout);
 
             if (result > 0) {
                 // Respuesta recibida
