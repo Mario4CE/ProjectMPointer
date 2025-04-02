@@ -1,4 +1,4 @@
-
+Ôªø
 #include "Server.h"
 #include "ClienteManager.h"
 #include "MemoryManager.h"
@@ -6,6 +6,7 @@
 #include "InfoLogger.h"
 #include "ActualizarRespuesta.h"
 #include <thread> // Para manejar clientes en hilos separados
+#include <fcntl.h>
 
 /*
 * Start Winsock
@@ -15,19 +16,17 @@ int startWinsock() {
     WSADATA wsa;
     int result = WSAStartup(MAKEWORD(2, 2), &wsa);
     if (result != 0) {
-        std::cout << "Error: startWinsock, cÛdigo de error: " << result << std::endl;
-        ErrorLogger::logError("Error: startWinsock, cÛdigo de error: " + std::to_string(result));
+        ErrorLogger::logError("Error: startWinsock, c√≥digo de error: " + std::to_string(result));
         return 1;
     }
     else {
-        std::cout << "°Winsock iniciado!\n";
-        InfoLogger::logInfo("°Winsock iniciado!");
+        InfoLogger::logInfo("¬°Winsock iniciado!");
         return 0;
     }
 }
 
 /*
-* FunciÛn para manejar un cliente
+* Funci√≥n para manejar un cliente
 * Inicializa al server
 */
 int startServer() {
@@ -41,14 +40,12 @@ int startServer() {
     acceptSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (acceptSocket == INVALID_SOCKET) {
         int error = WSAGetLastError();
-        std::cout << "Error: No se pudo crear el socket, cÛdigo de error: " << error << std::endl;
-        ErrorLogger::logError("Error: No se pudo crear el socket, cÛdigo de error: " + std::to_string(error));
+        ErrorLogger::logError("Error: No se pudo crear el socket, c√≥digo de error: " + std::to_string(error));
         WSACleanup();
         return 1;
     }
     else {
-        std::cout << "°Socket creado!\n";
-        InfoLogger::logInfo("°Socket creado!");
+        InfoLogger::logInfo("¬°Socket creado!");
     }
 
     addr.sin_family = AF_INET;
@@ -59,14 +56,12 @@ int startServer() {
 
     if (bind(acceptSocket, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN)) == SOCKET_ERROR) {
         int error = WSAGetLastError();
-        std::cout << "Error: bind, cÛdigo de error: " << error << std::endl;
-        ErrorLogger::logError("Error: bind, cÛdigo de error: " + std::to_string(error));
+        ErrorLogger::logError("Error: bind, c√≥digo de error: " + std::to_string(error));
         closesocket(acceptSocket);
         WSACleanup();
         return 1;
     }
     else {
-        std::cout << "Socket asociado al puerto " << PORT << "\n";
         InfoLogger::logInfo("Socket asociado al puerto " + std::to_string(PORT));
     }
 
@@ -74,42 +69,35 @@ int startServer() {
 
     if (listen(acceptSocket, MAX_PENDING_CONNECTIONS) == SOCKET_ERROR) {
         int error = WSAGetLastError();
-        std::cout << "Error: listen, cÛdigo de error: " << error << std::endl;
-        ErrorLogger::logError("Error: listen, cÛdigo de error: " + std::to_string(error));
+        ErrorLogger::logError("Error: listen, c√≥digo de error: " + std::to_string(error));
         closesocket(acceptSocket);
         WSACleanup();
         return 1;
     }
     else {
-        std::cout << "acceptSocket est· en modo de escucha....\n";
-        InfoLogger::logInfo("acceptSocket est· en modo de escucha....");
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexiÛn...");
+        InfoLogger::logInfo("acceptSocket est√° en modo de escucha....");
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Esperando conexi√≥n...");
     }
-
-    // Aceptar conexiones entrantes
 
     // Aceptar conexiones entrantes
     while (true) {
         SOCKET connectedSocket = accept(acceptSocket, NULL, NULL);
         if (connectedSocket == INVALID_SOCKET) {
             int error = WSAGetLastError();
-            std::cout << "Error: accept, cÛdigo de error: " << error << std::endl;
-            ErrorLogger::logError("Error: accept, cÛdigo de error: " + std::to_string(error));
-            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error al aceptar conexiÛn");
-            continue; // Contin˙a escuchando nuevas conexiones
+            ErrorLogger::logError("Error: accept, c√≥digo de error: " + std::to_string(error));
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error al aceptar conexi√≥n");
+            continue; // Contin√∫a escuchando nuevas conexiones
         }
         else {
-            std::cout << "°Nueva conexiÛn aceptada!!!!!!\n";
-            InfoLogger::logInfo("°Nueva conexiÛn aceptada!");
-            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("ConexiÛn establecida");
+            InfoLogger::logInfo("¬°Nueva conexi√≥n aceptada!");
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexi√≥n establecida");
 
             // Enviar mensaje de bienvenida al cliente
-            std::string mensajeBienvenida = "°Bienvenido al servidor!!!!!!!";
+            std::string mensajeBienvenida = "¬°Bienvenido al servidor!!!!!!!";
             if (!sendToClient(connectedSocket, mensajeBienvenida)) {
-                std::cout << "Error al enviar mensaje de bienvenida. Cerrando conexiÛn.\n";
-                ErrorLogger::logError("Error al enviar mensaje de bienvenida. Cerrando conexiÛn.");
-                closesocket(connectedSocket); // Cerrar el socket si falla el envÌo
-                continue; // Contin˙a escuchando nuevas conexiones
+                ErrorLogger::logError("Error al enviar mensaje de bienvenida. Cerrando conexi√≥n.");
+                closesocket(connectedSocket); // Cerrar el socket si falla el env√≠o
+                continue; // Contin√∫a escuchando nuevas conexiones
             }
 
             // Iniciar el hilo para manejar el cliente
@@ -124,46 +112,72 @@ int startServer() {
 }
 
 /*
-* FunciÛn para manejar un cliente
-* Se encarga de recibir los mensajes del cliente y procesarlos
-* Se encarga de enviar mensajes al cliente
+* Metodo que llama a sendToClientel mensaje para enviarle
+* Este metodo se va a usar desde otras clases
 */
-bool sendToClient(SOCKET clientSocket, const std::string& message) {
+
+bool enviarComando(const std::string& message) {
+    SOCKET clientSocket = MemoryManager::getInstance().getClientSocket();
+    std::cout << "Valor de clientSocket: " << clientSocket << std::endl;
     if (clientSocket == INVALID_SOCKET) {
-        ErrorLogger::logError("Intento de enviar a socket inv·lido");
+        ErrorLogger::logError("Intento de enviar a socket inv√°lido en enviar comando");
         return false;
     }
-
-    // Verificar si el socket sigue conectado
     fd_set writefds;
     FD_ZERO(&writefds);
     FD_SET(clientSocket, &writefds);
-    timeval timeout = { 1, 0 }; // Timeout de 1 segundo
+    timeval timeout = { 10, 0 };
+    return sendToClient(clientSocket, message);
+}
 
-    if (select(0, NULL, &writefds, NULL, &timeout) <= 0) {
-        ErrorLogger::logError("Socket no est· listo para escritura o error de conexiÛn");
-        closesocket(clientSocket); // Cerrar el socket si la conexiÛn est· rota
+/*
+* Funci√≥n para manejar un cliente
+* Se encarga de recibir los mensajes del cliente y procesarlos
+* Se encarga de enviar mensajes al cliente
+*/
+
+bool sendToClient(SOCKET clientSocket, const std::string& message) {
+    if (clientSocket == INVALID_SOCKET) {
+        ErrorLogger::logError("‚ùå Intento de enviar a un socket inv√°lido.");
         return false;
     }
 
-    // Resto de tu implementaciÛn de envÌo...
+    // Comprobar si el socket sigue conectado antes de enviar datos
+    fd_set writefds;
+    FD_ZERO(&writefds);
+    FD_SET(clientSocket, &writefds);
+    timeval timeout = { 10, 0 }; // Esperar hasta 10 segundos
+
+    int result = select(0, NULL, &writefds, NULL, &timeout);
+    if (result <= 0) { // Error o timeout
+        int error = WSAGetLastError();
+        ErrorLogger::logError("‚ùå Socket no est√° listo para escritura. C√≥digo de error: " + std::to_string(error));
+        closesocket(clientSocket); // Cerrar el socket para evitar errores futuros
+        return false;
+    }
+
+    // Enviar longitud del mensaje
     uint32_t messageLength = htonl(static_cast<uint32_t>(message.size()));
-    int rc = send(clientSocket, reinterpret_cast<const char*>(&messageLength), sizeof(messageLength), 0);
-
-    if (rc == SOCKET_ERROR) {
+    if (send(clientSocket, reinterpret_cast<const char*>(&messageLength), sizeof(messageLength), 0) == SOCKET_ERROR) {
         int error = WSAGetLastError();
-        ErrorLogger::logError("Error al enviar longitud: " + std::to_string(error));
-        closesocket(clientSocket); // Cerrar el socket si hay un error
+        ErrorLogger::logError("‚ùå Error al enviar longitud del mensaje. C√≥digo: " + std::to_string(error));
+        closesocket(clientSocket);
         return false;
     }
 
-    rc = send(clientSocket, message.c_str(), static_cast<int>(message.size()), 0);
-    if (rc == SOCKET_ERROR) {
+    // Enviar mensaje completo
+    if (send(clientSocket, message.c_str(), static_cast<int>(message.size()), 0) == SOCKET_ERROR) {
         int error = WSAGetLastError();
-        ErrorLogger::logError("Error al enviar mensaje: " + std::to_string(error));
-        closesocket(clientSocket); // Cerrar el socket si hay un error
+        ErrorLogger::logError("‚ùå Error al enviar mensaje. C√≥digo: " + std::to_string(error));
+        closesocket(clientSocket);
         return false;
     }
 
+    InfoLogger::logInfo("‚úÖ Mensaje enviado correctamente.");
     return true;
+}
+
+
+int obtenerSocket() {
+    return MemoryManager::getInstance().getClientSocket();
 }

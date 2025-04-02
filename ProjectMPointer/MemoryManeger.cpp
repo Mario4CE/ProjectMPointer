@@ -1,37 +1,41 @@
-
+﻿
+//Bibliotecas necesarias y definiciones de funciones
 #include "MemoryManager.h"
 #include "ActualizarRespuesta.h"
 #include "ErrorLogger.h"
 #include "MemoryLogger.h"
+#include "InfoLogger.h"
 #include "Server.h"
 #include "Interfaz.h"
+#include "ClienteManager.h"
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-#include <variant>
 #include <string>
-#include <memory>
-#include <cstring> 
+#include <cstring>
 #include <algorithm>
+#include <thread>
+#include <winsock2.h>
+#include <stdexcept>
+#include <fcntl.h>
 
-
-// Inicializar variables est�ticas
+// --- Inicialización de Variables Estáticas ---
 char* MemoryManager::memoryPool = nullptr;
 std::unordered_map<int, MemoryManager::MemoryBlock> MemoryManager::memoryBlocks;
 std::vector<std::pair<size_t, size_t>> MemoryManager::freeBlocks;
 int MemoryManager::nextId = 1;
 size_t MemoryManager::nextFree = 0;
 
-/*
-* Metodo para inicializar la memoria
-* Inicializa la memoria con 1GB
-* Reinicia los bloques de memoria
-* Reinicia los bloques libres
-* Reinicia el ID
-* Pone todo en orden para empezar a trabajar
-*/
 
+// --- Funciones de Inicialización y Estado ---
+
+/*
+ * Inicializa el pool de memoria.
+ * - Asigna 1GB de memoria.
+ * - Limpia los bloques de memoria y los bloques libres.
+ * - Resetea el ID del siguiente bloque.
+ */
 void MemoryManager::initialize() {
     memoryPool = new char[TOTAL_MEMORY];
     freeBlocks.clear();
@@ -45,16 +49,16 @@ void MemoryManager::initialize() {
 }
 
 /*
-* Esto es lo que se guarda cuando se ejecuta una orden
-* Es lo que nos mantiene el registro de las peticiones
-*/
-
+ * Obtiene el estado actual de la memoria.
+ * - Recorre todos los bloques de memoria y crea una representación en string.
+ * - Incluye ID, tamaño, tipo, refCount, offset y el valor almacenado.
+ */
 std::vector<std::string> MemoryManager::getMemoryState() {
     std::vector<std::string> state;
     for (const auto& block : memoryBlocks) {
         std::stringstream ss;
         ss << "ID: " << block.second.id
-            << ", Tama�o: " << block.second.size
+            << ", Tamaño: " << block.second.size
             << ", Tipo: " << block.second.type
             << ", RefCount: " << block.second.refCount
             << ", Offset: " << block.second.offset;
@@ -90,12 +94,14 @@ std::vector<std::string> MemoryManager::getMemoryState() {
     return state;
 }
 
-/*
-* Metodo para procesar una peticion
-* Este metodo resive la peticion del cliente y la procesa para lleamar al metodo correspondiente
-* y mostrar errores si es necesario
-*/
+// --- Funciones de Procesamiento de Peticiones ---
 
+/*
+ * Procesa las peticiones del cliente.
+ * - Inicializa la memoria si es necesario.
+ * - Analiza el comando y llama a la función correspondiente.
+ * - Maneja errores y registra logs.
+ */
 std::string MemoryManager::processRequest(const std::string& request) {
     if (memoryPool == nullptr) {
         initialize();
@@ -110,34 +116,30 @@ std::string MemoryManager::processRequest(const std::string& request) {
         if (command == "Create") {
             std::string size, type;
             iss >> size >> type;
+            InfoLogger:: logInfo("Creando bloque de memoria con tamaño " + size + " y tipo " + type);
             return handleCreate(size, type);
         }
-
         else if (command == "Set") {
             int id;
             std::string value;
             iss >> id >> value;
             return handleSet(id, value);
         }
-
         else if (command == "Get") {
             int id;
             iss >> id;
             return handleGet(id);
         }
-
         else if (command == "IncreaseRefCount") {
             int id;
             iss >> id;
             return handleIncreaseRefCount(id);
         }
-
         else if (command == "DecreaseRefCount") {
             int id;
             iss >> id;
             return handleDecreaseRefCount(id);
         }
-
         else if (command == "Estado") {
             std::vector<std::string> state = getMemoryState();
             std::string response = "Estado de la memoria:\n";
@@ -146,15 +148,13 @@ std::string MemoryManager::processRequest(const std::string& request) {
             }
             return response;
         }
-
         else if (command == "Cerrar") {
             InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Cerrando servidor...");
             InterfazCLI::Respuestas::CerrarVentana();
             return "Cerrando servidor...";
         }
-
         else {
-            throw std::invalid_argument("Comando no reconocido, su puta madre: " + command);
+            throw std::invalid_argument("Comando no reconocido: " + command);
         }
     }
     catch (const std::exception& e) {
@@ -165,13 +165,16 @@ std::string MemoryManager::processRequest(const std::string& request) {
     }
 }
 
-/*
-* Validacion de tama�o de bloque, tiene que ser coherente con el tipo, esto para ahorrar memoria
-*/
 
+// --- Funciones de Manejo de Bloques de Memoria ---
+
+/*
+ * Valida el tamaño del bloque según el tipo de dato.
+ * - Asegura que el tamaño sea coherente con el tipo para ahorrar memoria.
+ */
 bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     std::string lowerType = type;
-    std::transform(lowerType.begin(), lowerType.end(), lowerType.begin(), ::tolower); // Convertir a min�sculas
+    std::transform(lowerType.begin(), lowerType.end(), lowerType.begin(), ::tolower);
 
     static const std::unordered_map<std::string, size_t> typeSizes = {
         {"int", sizeof(int)},
@@ -182,64 +185,147 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
 
     auto it = typeSizes.find(lowerType);
     if (it != typeSizes.end()) {
-        return size != 0 && size % it->second == 0; // Correcci�n: Verificar si es m�ltiplo y no cero
+        return size != 0 && size % it->second == 0;
     }
 
     if (lowerType == "string" || lowerType == "str") {
-        return true; // Para string, solo validamos que el tipo sea correcto.
-        // Opcional: Puedes agregar validaci�n basada en la longitud m�xima de la cadena si es necesario.
+        return true;
     }
 
     throw std::invalid_argument("Tipo de dato no soportado: " + type);
+    
 }
 
 /*
-* Metodo para crear un bloque de memoria
-* Es uno de los 5 metodos que resive del cliente
-*/
-
+ * Crea un nuevo bloque de memoria.
+ * - Valida el tamaño del bloque.
+ * - Asigna memoria y actualiza el estado.
+ * - Envía un mensaje al cliente.
+ */
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
-    size_t blockSize = std::stoul(size);
+    size_t blockSize;
 
-    // Validar el tama�o del bloque
-    if (!validateSizeForType(type, blockSize)) {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tama�o incongruente con el tipo");
-        ErrorLogger::logError("Error: Tama�o incongruente con el tipo");
-        return "Error: Tama�o incongruente con el tipo";
+    // 1️⃣ Validar tamaño
+    std::string validationError = validateBlockSize(size, type, blockSize);
+    if (!validationError.empty()) return validationError;
+
+    // 2️⃣ Crear y almacenar bloque
+    MemoryBlock newBlock = createMemoryBlock(blockSize, type);
+    if (newBlock.id == -1) return "Error: No hay espacio suficiente";
+
+    // 3️⃣ Actualizar UI y log
+    updateUIWithBlockInfo(newBlock);
+
+    // 4️⃣ Enviar mensaje de confirmación al cliente
+    sendBlockCreationMessage(newBlock);
+
+    return "Bloque creado con ID: " + std::to_string(newBlock.id);
+}
+
+/**
+ * 🔍 Valida el tamaño y convierte la entrada a un número.
+ */
+std::string MemoryManager::validateBlockSize(const std::string& size, const std::string& type, size_t& blockSize) {
+    try {
+        blockSize = std::stoul(size);
+    }
+    catch (const std::invalid_argument& e) {
+        return logAndReturnError("Error: Tamaño no válido", e.what());
+    }
+    catch (const std::out_of_range& e) {
+        return logAndReturnError("Error: Tamaño fuera de rango", e.what());
     }
 
-    MemoryBlock newBlock(nextId++, blockSize, 0, type); // Offset inicial es 0
+    if (!validateSizeForType(type, blockSize)) {
+        return logAndReturnError("Error: Tamaño incongruente con el tipo");
+    }
 
-    // Asignar memoria con el tama�o proporcionado por el cliente
+    return ""; // Sin errores
+}
+
+/**
+ * 📦 Crea un nuevo bloque de memoria y lo almacena.
+ */
+MemoryManager::MemoryBlock MemoryManager::createMemoryBlock(size_t blockSize, const std::string& type) {
+    MemoryBlock newBlock(nextId++, blockSize, 0, type);
+
     if (!allocateMemory(newBlock.size, newBlock)) {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: No hay espacio suficiente");
-        return "Error: No hay espacio suficiente";
+        logAndReturnError("Error: No hay espacio suficiente");
+        return MemoryManager::MemoryBlock(-1, 0, 0, ""); // Retorna un bloque inválido
     }
 
     memoryBlocks[newBlock.id] = newBlock;
+    return newBlock;
+}
 
-    // Imprimir la direcci�n de memoria del bloque creado
-    std::cout << "Bloque ID: " << newBlock.id << ", Direcci�n: " << (void*)(memoryPool + newBlock.offset) << ", Tama�o: " << newBlock.size << " bytes" << std::endl;
-    
-    //Se actuliza ellabell del formulario mostrando el Bloque con el Id creado y abajo de eso el estado de la memoria
-    std::stringstream ss;
+
+/**
+ * 🖥️ Actualiza la UI y los logs con la información del nuevo bloque.
+ */
+void MemoryManager::updateUIWithBlockInfo(const MemoryBlock& newBlock) {
+    std::ostringstream ss;
     ss << "Bloque ID: " << newBlock.id
-        << ", Direcci�n: " << (void*)(memoryPool + newBlock.offset)
-        << ", Tama�o: " << newBlock.size << " bytes";
+        << ", Dirección: " << static_cast<void*>(memoryPool + newBlock.offset)
+        << ", Tamaño: " << newBlock.size << " bytes";
+
+    std::cout << ss.str() << std::endl;
     InterfazCLI::Respuestas::ActualizarLabelEnFormulario(ss.str());
+
     std::vector<std::string> memoryState = getMemoryState();
     MemoryLogger::logMemoryState(memoryState);
+}
 
-    getMemoryState();
+/**
+ * 📤 Envía un mensaje al cliente con la información del bloque creado.
+ */
+void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
+    SOCKET socket_fd = obtenerSocket();
+    if (socket_fd == INVALID_SOCKET) {
+        ErrorLogger::logError("❌ Socket inválido, no se pudo enviar mensaje.");
+        return;
+    }
 
-    return "Creado bloque ID: " + std::to_string(newBlock.id);
+    // Configurar select() para verificar si el socket está listo para escribir
+    fd_set writefds;
+    FD_ZERO(&writefds);
+    FD_SET(socket_fd, &writefds);
+    timeval timeout = { 10, 0 }; // 10 segundos
+
+    std::string mensaje = "Bloque creado con ID: " + std::to_string(newBlock.id);
+
+    int result = select(socket_fd + 1, nullptr, &writefds, nullptr, &timeout);
+    if (result > 0 && FD_ISSET(socket_fd, &writefds)) {
+        if (enviarComando(mensaje)) {
+            InfoLogger::logInfo("✅ Mensaje enviado correctamente.");
+        }
+        else {
+            ErrorLogger::logError("❌ Error al enviar mensaje al cliente.");
+        }
+    }
+    else {
+        ErrorLogger::logError("❌ Timeout o error en select() al esperar escritura en el socket.");
+    }
+}
+
+/**
+ * 🛠️ Registra un error en el log y devuelve el mensaje de error.
+ */
+std::string MemoryManager::logAndReturnError(const std::string& errorMsg, const std::string& details) { // No default argument here
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario(errorMsg);
+    if (!details.empty()) {
+        ErrorLogger::logError(errorMsg + ": " + details);
+    }
+    else {
+        ErrorLogger::logError(errorMsg);
+    }
+    return errorMsg;
 }
 
 /*
-* Metodo para asignar un valor a un bloque de memoria
-* Es uno de los 5 metodos que resive del cliente
-*/
-
+ * Asigna un valor a un bloque de memoria.
+ * - Valida el tipo de dato y el tamaño del valor.
+ * - Actualiza el bloque de memoria.
+ */
 std::string MemoryManager::handleSet(int id, const std::string& value) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -251,28 +337,28 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
 
     if (blockPtr->type == "int") {
         if (!validateDataType(blockPtr->type, value, sizeof(int))) {
-            return "Error: Tama�o de valor incorrecto para el tipo int.";
+            return "Error: Tamaño de valor incorrecto para el tipo int.";
         }
         int intValue = std::stoi(value);
         std::memcpy(memoryPool + blockPtr->offset, &intValue, sizeof(int));
     }
     else if (blockPtr->type == "double") {
         if (!validateDataType(blockPtr->type, value, sizeof(double))) {
-            return "Error: Tama�o de valor incorrecto para el tipo double.";
+            return "Error: Tamaño de valor incorrecto para el tipo double.";
         }
         double doubleValue = std::stod(value);
         std::memcpy(memoryPool + blockPtr->offset, &doubleValue, sizeof(double));
     }
     else if (blockPtr->type == "char") {
         if (!validateDataType(blockPtr->type, value, sizeof(char))) {
-            return "Error: Tama�o de valor incorrecto para el tipo char.";
+            return "Error: Tamaño de valor incorrecto para el tipo char.";
         }
         char charValue = value[0];
         std::memcpy(memoryPool + blockPtr->offset, &charValue, sizeof(char));
     }
     else if (blockPtr->type == "float") {
         if (!validateDataType(blockPtr->type, value, sizeof(float))) {
-            return "Error: Tama�o de valor incorrecto para el tipo float.";
+            return "Error: Tamaño de valor incorrecto para el tipo float.";
         }
         float floatValue = std::stof(value);
         std::memcpy(memoryPool + blockPtr->offset, &floatValue, sizeof(float));
@@ -294,10 +380,9 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
 }
 
 /*
-* Metodo para obtener el valor de un bloque de memoria
-* Es uno de los 5 metodos que resive del cliente
-*/
-
+ * Obtiene el valor de un bloque de memoria.
+ * - Lee el valor del bloque y lo devuelve como string.
+ */
 std::string MemoryManager::handleGet(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -307,7 +392,6 @@ std::string MemoryManager::handleGet(int id) {
         return "Error: ID no encontrado";
     }
 
-    // Leer el valor almacenado en el bloque de memoria
     if (blockPtr->type == "int") {
         int value;
         std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(int));
@@ -340,10 +424,8 @@ std::string MemoryManager::handleGet(int id) {
 }
 
 /*
-* Metodo para incrementar el contador de referencias de un bloque de memoria
-* Es uno de los 5 metodos que resive del cliente
-*/
-
+ * Incrementa el contador de referencias de un bloque.
+ */
 std::string MemoryManager::handleIncreaseRefCount(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -357,10 +439,9 @@ std::string MemoryManager::handleIncreaseRefCount(int id) {
 }
 
 /*
-* Metodo para decrementar el contador de referencias de un bloque de memoria
-* Es uno de los 5 metodos que resive del cliente
-*/
-
+ * Decrementa el contador de referencias de un bloque.
+ * - Libera el bloque si el contador llega a cero.
+ */
 std::string MemoryManager::handleDecreaseRefCount(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -378,9 +459,13 @@ std::string MemoryManager::handleDecreaseRefCount(int id) {
     return "RefCount decrementado para bloque ID: " + std::to_string(id);
 }
 
+// --- Funciones de Gestión de Memoria ---
+
 /*
-* Metodo para asignar memoria
-*/
+ * Asigna memoria a un bloque.
+ * - Busca un bloque libre con suficiente espacio.
+ * - Actualiza la lista de bloques libres.
+ */
 bool MemoryManager::allocateMemory(size_t size, MemoryBlock& block) {
     for (auto it = freeBlocks.begin(); it != freeBlocks.end(); ++it) {
         if (it->second >= size) {
@@ -401,9 +486,10 @@ bool MemoryManager::allocateMemory(size_t size, MemoryBlock& block) {
 }
 
 /*
-* Metodo para liberar memoria
-*/
-
+ * Libera la memoria de un bloque.
+ * - Agrega el bloque liberado a la lista de bloques libres.
+ * - Elimina el bloque del mapa de bloques de memoria.
+ */
 void MemoryManager::releaseMemory(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -414,9 +500,12 @@ void MemoryManager::releaseMemory(int id) {
     memoryBlocks.erase(id);
 }
 
+// --- Funciones de Validación y Búsqueda ---
+
 /*
-Validacion que manda a hacer el metodo de Set
-*/
+ * Valida el tipo de dato de un valor.
+ * - Asegura que el tamaño del valor sea correcto para el tipo de bloque.
+ */
 bool MemoryManager::validateDataType(const std::string& blockType, const std::string& value, size_t expectedSize) {
     if (blockType == "int" || blockType == "double" || blockType == "char" || blockType == "float" || blockType == "string") {
         if (value.size() != expectedSize) {
@@ -427,9 +516,9 @@ bool MemoryManager::validateDataType(const std::string& blockType, const std::st
 }
 
 /*
-* Metodo para encontrar un bloque
-*/
-
+ * Encuentra un bloque de memoria por su ID.
+ * - Devuelve un puntero al bloque si se encuentra, o nullptr si no.
+ */
 MemoryManager::MemoryBlock* MemoryManager::findBlock(int id) {
     auto it = memoryBlocks.find(id);
     if (it == memoryBlocks.end()) {

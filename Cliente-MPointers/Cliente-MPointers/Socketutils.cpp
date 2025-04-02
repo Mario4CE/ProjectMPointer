@@ -6,8 +6,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
-#include <thread> // Para hilos
-#include <chrono> // Para timeouts
+#include <thread>
+#include <chrono>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -17,7 +17,7 @@ void receiveMessages(SOCKET clientSocket) {
     int bytesReceived;
     while ((bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
         std::string message(buffer, bytesReceived);
-        std::cout << "Mensaje del servidor: " << message << std::endl;
+        std::cout << "Mensaje del servidor se mostrara a continuacion: " << message << std::endl;
     }
     if (bytesReceived == SOCKET_ERROR) {
         int error = WSAGetLastError();
@@ -41,19 +41,23 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
             sockaddr_in serverAddr = {};
             serverAddr.sin_family = AF_INET;
             serverAddr.sin_port = htons(port);
+
             if (inet_pton(AF_INET, address.c_str(), &serverAddr.sin_addr) <= 0) { /* ... */ }
             if (connect(clientSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) { /* ... */ }
 
             // Esperar 10 segundos por el mensaje de bienvenida
-            fd_set readfds;
-            FD_ZERO(&readfds);
-            FD_SET(clientSocket, &readfds);
+            fd_set writefds;
+            FD_ZERO(&writefds);
+            FD_SET(clientSocket, &writefds);
             struct timeval timeout = { 10, 0 }; // 10 segundos
-            int result = select(0, &readfds, nullptr, nullptr, &timeout);
+
+            int result = select(0, nullptr, &writefds, nullptr, &timeout);
+
             if (result > 0) {
                 // Mensaje de bienvenida recibido
                 char welcomeBuffer[1024];
                 int welcomeBytesReceived = recv(clientSocket, welcomeBuffer, sizeof(welcomeBuffer), 0);
+
                 if (welcomeBytesReceived > 0) {
                     std::string welcomeMessage(welcomeBuffer, welcomeBytesReceived);
                     std::cout << "Mensaje de bienvenida recibido: " << welcomeMessage << std::endl;
@@ -75,20 +79,46 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
 
             return "Conexión establecida.";
         }
+
         else {
-            // Envío de la petición y recepción de la respuesta (como antes)
+            // Envío de la petición y recepción de la respuesta con timeout usando select
             if (clientSocket == INVALID_SOCKET) { /* ... */ }
-            if (send(clientSocket, request.c_str(), static_cast<int>(request.size()), 0) == SOCKET_ERROR) { /* ... */ }
 
-            std::stringstream responseStream;
-            char buffer[1024];
-            int bytesReceived;
-            while ((bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
-                responseStream.write(buffer, bytesReceived);
+            // Intenta enviar la petición y maneja el error si ocurre
+            if (send(clientSocket, request.c_str(), static_cast<int>(request.size()), 0) == SOCKET_ERROR) {
+                int error = WSAGetLastError();
+                std::string errorMessage = "Error al enviar la petición. Código de error: " + std::to_string(error);
+                ErrorLogger::logError(errorMessage);
+                // Continúa con la recepción de la respuesta a pesar del error de envío
             }
-            if (bytesReceived == SOCKET_ERROR) { /* ... */ }
 
-            return responseStream.str();
+            fd_set readfds;
+            FD_ZERO(&readfds);
+            FD_SET(clientSocket, &readfds);
+            struct timeval timeout = { 10, 0 };
+            int result = select(0, &readfds, nullptr, nullptr, &timeout);
+
+            if (result > 0) {
+                // Respuesta recibida
+                std::stringstream responseStream;
+                char buffer[1024];
+                int bytesReceived;
+                while ((bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
+                    responseStream.write(buffer, bytesReceived);
+                }
+                if (bytesReceived == SOCKET_ERROR) { /* ... */ }
+                return responseStream.str();
+            }
+            else if (result == 0) {
+                // Tiempo de espera agotado
+                ErrorLogger::logError("Error tiempo agotado");
+                return "Error tiempo agotado"; // O lanza una excepción o devuelve un mensaje de tiempo de espera.
+            }
+            else {
+                // Error en select
+                ErrorLogger::logError("Error en select");
+                return "Error"; // O lanza una excepción o maneja el error.
+            }
         }
     }
     catch (...) {
