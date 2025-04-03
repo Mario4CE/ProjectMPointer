@@ -1,10 +1,11 @@
 
+
 #pragma once
 
 #include <msclr/gcroot.h>
 #include "MPointer.h"
 #include "SocketUtils.h" // Incluir SocketUtils
-#include <iostream> // Incluir iostream para mensajes de depuración
+#include <iostream> // Incluir iostream para mensajes de depuraci?n
 
 namespace ClienteMPointers {
     using namespace System;
@@ -19,14 +20,14 @@ namespace ClienteMPointers {
     private: System::Windows::Forms::Button^ BtnConectar;
            MPointer<char>* mptrChar;
 
-           // Variable para rastrear el estado de la conexión
+           // Variable para rastrear el estado de la conexi?n
            bool conectado;
 
     public:
         Cliente(void) {
             InitializeComponent();
 
-            // Inicialización correcta
+            // Inicializaci?n correcta
             mptrInt = new MPointer<int>();
             mptrDouble = new MPointer<double>();
             mptrFloat = new MPointer<float>();
@@ -34,7 +35,7 @@ namespace ClienteMPointers {
 
             // Inicialmente no conectado
             conectado = false;
-            BtnConectar->Enabled = !conectado; // Habilitar solo si no está conectado
+            BtnConectar->Enabled = !conectado; // Habilitar solo si no est? conectado
         }
 
     protected:
@@ -62,7 +63,7 @@ namespace ClienteMPointers {
         }
 
     private:
-        // Controles de la interfaz gráfica
+        // Controles de la interfaz gr?fica
         System::Windows::Forms::Button^ btnCliente;
         System::Windows::Forms::TextBox^ txtPeticion;
         System::Windows::Forms::Label^ lblRespuesta;
@@ -71,11 +72,11 @@ namespace ClienteMPointers {
         // Contenedor de componentes
         System::ComponentModel::Container^ components;
 
-        // Manejador de eventos para el clic del botón
+        // Manejador de eventos para el clic del bot?n
         System::Void btnCliente_Click(System::Object^ sender, System::EventArgs^ e);
 
-        // Declaración de la función EnviarPeticion
-        //std::string EnviarPeticion(const std::string& peticion); // Declaración correcta
+        // Declaraci?n de la funci?n EnviarPeticion
+        //std::string EnviarPeticion(const std::string& peticion); // Declaraci?n correcta
 
 #pragma region Windows Form Designer generated code
         /// <summary>
@@ -99,7 +100,7 @@ namespace ClienteMPointers {
             this->btnCliente->Name = L"btnCliente";
             this->btnCliente->Size = System::Drawing::Size(224, 80);
             this->btnCliente->TabIndex = 0;
-            this->btnCliente->Text = L"Enviar Petición";
+            this->btnCliente->Text = L"Enviar Petici?n";
             this->btnCliente->UseVisualStyleBackColor = false;
             this->btnCliente->Click += gcnew System::EventHandler(this, &Cliente::btnCliente_Click);
             //
@@ -121,7 +122,7 @@ namespace ClienteMPointers {
             this->lblRespuesta->Name = L"lblRespuesta";
             this->lblRespuesta->Size = System::Drawing::Size(308, 164);
             this->lblRespuesta->TabIndex = 2;
-            this->lblRespuesta->Text = L"Respuesta del servidor aparecerá aquí.";
+            this->lblRespuesta->Text = L"Respuesta del servidor aparecer? aqu?.";
             this->lblRespuesta->TextAlign = System::Drawing::ContentAlignment::TopCenter;
             //
             // lblTitle
@@ -176,18 +177,18 @@ namespace ClienteMPointers {
         if (!conectado) {
             try {
                 // Intentar conectar al servidor
-                std::string respuesta = SocketUtils::sendRequest("127.0.0.1", 12345, "Conectar"); // Enviar petición de conexión
+                std::string respuesta = SocketUtils::sendRequest("127.0.0.1", 12345, "Conectar"); // Enviar petici?n de conexi?n
                 conectado = true;
-                BtnConectar->Enabled = false; // Deshabilitar el botón después de conectar
+                BtnConectar->Enabled = false; // Deshabilitar el bot?n despu?s de conectar
                 lblRespuesta->Text = gcnew System::String(respuesta.c_str()); // Mostrar respuesta
                 lblRespuesta->ForeColor = System::Drawing::Color::Black; // Color de texto normal
-                std::cout << "Conexión exitosa: " << respuesta << std::endl; // Mensaje de depuración
+                std::cout << "Conexi?n exitosa: " << respuesta << std::endl; // Mensaje de depuraci?n
             }
             catch (const std::exception& ex) {
-                // Manejar errores de conexión
-                lblRespuesta->Text = gcnew System::String(("Error de conexión: " + std::string(ex.what())).c_str());
+                // Manejar errores de conexi?n
+                lblRespuesta->Text = gcnew System::String(("Error de conexi?n: " + std::string(ex.what())).c_str());
                 lblRespuesta->ForeColor = System::Drawing::Color::Red; // Color de texto rojo para errores
-                std::cerr << "Error de conexión: " << ex.what() << std::endl; // Mensaje de depuración
+                std::cerr << "Error de conexi?n: " << ex.what() << std::endl; // Mensaje de depuraci?n
             }
         }
     }

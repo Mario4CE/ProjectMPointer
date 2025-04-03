@@ -19,26 +19,26 @@ template <typename T>
 class MPointer {
 public:
     // Constructor por defecto
-    MPointer() : id(-1) {} // Inicializa el ID a -1 (inválido)
+    MPointer() : id(-1) {} // Inicializa el ID a -1 (inv?lido)
 
-    // Constructor con ID específico
+    // Constructor con ID espec?fico
     MPointer(int id) : id(id) {}
 
     // Destructor
     ~MPointer() {
         if (id != -1) {
-            // Notificar al Memory Manager que se destruyó una referencia
+            // Notificar al Memory Manager que se destruy? una referencia
             this->sendRequest("DecreaseRefCount " + std::to_string(id));
         }
     }
 
-    // Inicialización estática
+    // Inicializaci?n est?tica
     static void Init(const std::string& address, int port) {
         serverAddress = address;
         serverPort = port;
     }
 
-    // Creación de nuevo MPointer
+    // Creaci?n de nuevo MPointer
     static MPointer<T> New() {
         // Necesitamos una instancia temporal para llamar a sendRequest
         MPointer<T> temp;
@@ -52,7 +52,7 @@ public:
         catch (const std::invalid_argument& e) {
             std::string mensajeError = "Error al convertir la respuesta del servidor a entero: " + std::string(e.what());
             ErrorLogger::logError(mensajeError);
-            throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
+            throw std::runtime_error("Respuesta inv?lida del servidor al crear un nuevo bloque: " + response);
         }
 
         return MPointer<T>(newId); // Devolver un nuevo MPointer con el ID asignado
@@ -75,10 +75,10 @@ public:
         return value; // Devolver el valor convertido
     }
 
-    // Operador de asignación (copia de MPointer)
+    // Operador de asignaci?n (copia de MPointer)
     MPointer<T>& operator=(const MPointer<T>& other) {
-        if (this != &other) { // Evitar auto-asignación
-            // Notificar al Memory Manager que se destruyó la referencia actual
+        if (this != &other) { // Evitar auto-asignaci?n
+            // Notificar al Memory Manager que se destruy? la referencia actual
             if (id != -1) {
                 this->sendRequest("DecreaseRefCount " + std::to_string(id));
             }
@@ -86,14 +86,14 @@ public:
             // Copiar el ID del otro MPointer
             id = other.id;
 
-            // Notificar al Memory Manager que se incrementó la referencia
+            // Notificar al Memory Manager que se increment? la referencia
             this->sendRequest("IncreaseRefCount " + std::to_string(id));
         }
 
         return *this; // Devolver una referencia a este objeto
     }
 
-    // Operador de asignación (valor)
+    // Operador de asignaci?n (valor)
     void operator=(const T& value) {
         // Convertir el valor a cadena
         std::ostringstream oss;
@@ -103,33 +103,33 @@ public:
         this->sendRequest("Set " + std::to_string(id) + " " + oss.str());
     }
 
-    // Operador de dirección (obtener ID)
+    // Operador de direcci?n (obtener ID)
     int operator&() {
         return id; // Devolver el ID del bloque de memoria
     }
 
 private:
     int id; // ID del bloque de memoria
-    static std::string serverAddress; // Dirección del servidor
+    static std::string serverAddress; // Direcci?n del servidor
     static int serverPort; // Puerto del servidor
 
-    // Función para enviar solicitudes al servidor
+    // Funci?n para enviar solicitudes al servidor
     std::string sendRequest(const std::string& request) {
         try {
             // Enviar la solicitud al servidor y recibir la respuesta
             std::string response = SocketUtils::sendRequest(serverAddress, serverPort, request);
 
-            // Verificar si la respuesta está vacía o es inválida
+            // Verificar si la respuesta est? vac?a o es inv?lida
             if (response.empty()) {
-                std::string mensajeError = "El servidor no devolvió una respuesta válida.";
+                std::string mensajeError = "El servidor no devolvi? una respuesta v?lida.";
                 ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("El servidor no devolvió una respuesta válida.");
+                throw std::runtime_error("El servidor no devolvi? una respuesta v?lida.");
             }
 
             return response; // Devolver la respuesta del servidor
         }
         catch (const std::exception& e) {
-            // Capturar y relanzar excepciones con un mensaje más descriptivo
+            // Capturar y relanzar excepciones con un mensaje m?s descriptivo
             std::string mensajeError = "Error en sendRequest: " + std::string(e.what());
             ErrorLogger::logError(mensajeError);
             throw std::runtime_error("Error en sendRequest: " + std::string(e.what()));
@@ -137,14 +137,14 @@ private:
     }
 };
 
-// Inicialización de miembros estáticos
+// Inicializaci?n de miembros est?ticos
 template <typename T>
 std::string MPointer<T>::serverAddress = "";
 
 template <typename T>
 int MPointer<T>::serverPort = 0;
 
-// Instanciaciones explícitas para los tipos que usarás
+// Instanciaciones expl?citas para los tipos que usar?s
 template class MPointer<int>;
 template class MPointer<double>;
 template class MPointer<char>;

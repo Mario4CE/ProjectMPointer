@@ -51,7 +51,7 @@ public:
     }
 
     MemoryManager(const MemoryManager&) = delete; //Metodo para borrar la instancia
-    void operator=(const MemoryManager&) = delete; 
+    void operator=(const MemoryManager&) = delete;
 
     void setClientSocket(SOCKET socket) { clientSocket = socket; } //Metodo para asignar el socket
     SOCKET getClientSocket() const { return clientSocket; } //Metodo para obtener el socket
@@ -82,6 +82,12 @@ private:
     static MemoryBlock* findBlock(int id); //Metodo para encontrar un bloque
     static bool validateDataType(const std::string& blockType, const std::string& value, size_t expectedSize);
     //Metodo para validar el tipo de dato
+    static std::string validateBlockSize(const std::string& size, const std::string& type, size_t& blockSize);
+    //Metodo para validar el tamaño del bloque
+    static void updateUIWithBlockInfo(const MemoryBlock& newBlock); //Metodo para actualizar la UI con la informacion del bloque
+    static void sendBlockCreationMessage(const MemoryBlock& newBlock); //Metodo para enviar un mensaje al cliente con la informacion del bloque
+    static MemoryBlock createMemoryBlock(size_t blockSize, const std::string& type); //Metodo para crear un bloque de memoria
+    static std::string logAndReturnError(const std::string& message, const std::string& error = ""); //Metodo para loggear y retornar un error
 };
 
 #endif // MEMORYMANAGER_H
