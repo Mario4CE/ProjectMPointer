@@ -12,7 +12,7 @@
 #pragma comment(lib, "ws2_32.lib")
 
 // Función para recibir mensajes del servidor en un hilo separado
-void receiveMessages(SOCKET clientSocket) {
+static void receiveMessages(SOCKET clientSocket) {
     char buffer[1024];
     int bytesReceived;
     while ((bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0)) > 0) {
@@ -20,7 +20,7 @@ void receiveMessages(SOCKET clientSocket) {
         fd_set writefds;
         FD_ZERO(&writefds);
         FD_SET(clientSocket, &writefds);
-        struct timeval timeout = { 8, 0 }; 
+        struct timeval timeout = { 5, 0 }; 
         std::cout << "Mensaje del servidor se mostrara a continuacion viva: " << message << std::endl;
 
     }
