@@ -1,5 +1,4 @@
 
-
 #include "Cliente.h"
 #include "SocketUtils.h"
 #include "MPointer.h"
@@ -21,7 +20,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
         std::string comando;
         iss >> comando;
 
-        if (comando == "Create") {
+        if (comando == "New") {
             std::string entero;
             iss >> entero;
             std::string tipo;
@@ -60,12 +59,42 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
         }
 
         //Comando set. Se pone set y un id que se le envia al server para asignarle un valor al id seleccionado
+        else if (comando == "Set") {
+            std::string id;
+            iss >> id;
+            std::string valor;
+            iss >> valor;
+            // Aquí se puede agregar la lógica para enviar el comando al servidor
+            respuesta = "Set " + id + " a " + valor;
+            this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
+        }
 
         //Comando get. Se pone get y el id para saber el valor que tiene ese dato
+        else if (comando == "Get") {
+            std::string id;
+            iss >> id;
+            // Aquí se puede agregar la lógica para enviar el comando al servidor
+            respuesta = "Get " + id; // Aquí se puede agregar la lógica para obtener el valor del servidor
+            this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
+        }
 
         //Comando Increase
+        else if (comando == "Increase") {
+            std::string id;
+            iss >> id;
+            // Aquí se puede agregar la lógica para enviar el comando al servidor
+            respuesta = "Increase " + id; // Aquí se puede agregar la lógica para aumentar el valor en el servidor
+            this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
+        }
 
         //Comando decrease
+        else if (comando == "Decrease") {
+            std::string id;
+            iss >> id;
+            // Aquí se puede agregar la lógica para enviar el comando al servidor
+            respuesta = "Decrease " + id; // Aquí se puede agregar la lógica para disminuir el valor en el servidor
+            this->lblRespuesta->ForeColor = System::Drawing::Color::Blue;
+        }
 
         //comando de Cerrar, cierra el cliente y el server
         else if (comando == "Cerrar") {
@@ -93,7 +122,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
 
         //Si el comando no es reconocido
         else {
-            respuesta = "Error: No hay conexión establecida. Intente conectar primero.";
+            respuesta = "Error: Comando no reconocido.";
             this->lblRespuesta->ForeColor = System::Drawing::Color::Red;
         }
     }

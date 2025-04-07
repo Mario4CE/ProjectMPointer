@@ -101,7 +101,7 @@ int startServer() {
             }
 
             // Iniciar el hilo para manejar el cliente
-            std::thread clientThread(handleClient, connectedSocket);
+            std::thread clientThread(ClienteManager::handleClient, connectedSocket);
             clientThread.detach();
         }
     }
@@ -116,7 +116,7 @@ int startServer() {
 * Este metodo se va a usar desde otras clases
 */
 
-bool enviarComando(const std::string& message) {
+bool  enviarComando(const std::string& message) {
     SOCKET clientSocket = 12345;
     std::cout << "Valor de clientSocket: " << clientSocket << std::endl;
     if (clientSocket == INVALID_SOCKET) {

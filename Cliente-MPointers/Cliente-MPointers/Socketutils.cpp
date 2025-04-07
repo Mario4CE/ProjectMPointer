@@ -54,7 +54,7 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
             fd_set writefds;
             FD_ZERO(&writefds);
             FD_SET(clientSocket, &writefds);
-            struct timeval timeout = { 10, 0 }; // 10 segundos
+            struct timeval timeout = { 5, 0 }; // 10 segundos
 
             int result = select(0, nullptr, &writefds, nullptr, &timeout);
 
@@ -100,7 +100,7 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
             fd_set writefds;
             FD_ZERO(&writefds);
             FD_SET(clientSocket, &writefds);
-            struct timeval timeout = { 15, 0 };
+            struct timeval timeout = { 5, 0 };
             int result = select(0, &writefds, nullptr, nullptr, &timeout);
 
             if (result > 0) {

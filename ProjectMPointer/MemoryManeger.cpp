@@ -217,7 +217,7 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
     updateUIWithBlockInfo(newBlock);
 
     // 4️⃣ Enviar mensaje de confirmación al cliente
-    sendBlockCreationMessage(newBlock);
+    //sendBlockCreationMessage(newBlock);
 
     //Lo que se envia al cliente es el id del bloque
     return std::to_string(newBlock.id);

@@ -182,13 +182,13 @@ namespace ClienteMPointers {
                 BtnConectar->Enabled = false; // Deshabilitar el bot?n despu?s de conectar
                 lblRespuesta->Text = gcnew System::String(respuesta.c_str()); // Mostrar respuesta
                 lblRespuesta->ForeColor = System::Drawing::Color::Black; // Color de texto normal
-                std::cout << "Conexi?n exitosa: " << respuesta << std::endl; // Mensaje de depuraci?n
+                std::cout << "Conexion exitosa: " << respuesta << std::endl; // Mensaje de depuraci?n
             }
             catch (const std::exception& ex) {
                 // Manejar errores de conexi?n
-                lblRespuesta->Text = gcnew System::String(("Error de conexi?n: " + std::string(ex.what())).c_str());
+                lblRespuesta->Text = gcnew System::String(("Error de conexion: " + std::string(ex.what())).c_str());
                 lblRespuesta->ForeColor = System::Drawing::Color::Red; // Color de texto rojo para errores
-                std::cerr << "Error de conexi?n: " << ex.what() << std::endl; // Mensaje de depuraci?n
+                std::cerr << "Error de conexion: " << ex.what() << std::endl; // Mensaje de depuraci?n
             }
         }
     }
