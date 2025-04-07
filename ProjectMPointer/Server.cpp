@@ -93,7 +93,7 @@ int startServer() {
             InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
 
             // Enviar mensaje de bienvenida al cliente
-            std::string mensajeBienvenida = "¡Bienvenido al servidor!!!!!!!";
+            std::string mensajeBienvenida = "¡Bienvenido al servidor!";
             if (!sendToClient(connectedSocket, mensajeBienvenida)) {
                 ErrorLogger::logError("Error al enviar mensaje de bienvenida. Cerrando conexión.");
                 closesocket(connectedSocket); // Cerrar el socket si falla el envío

@@ -49,49 +49,33 @@ public:
     }
 
     // Creaci?n de nuevo MPointer
-    template <typename T>
-    static MPointer<T> New(int maxRetries = 5, int timeoutMs = 5000) {
+    static MPointer<T> New(int timeoutMs = 5000) {
         MPointer<T> temp;
         std::string response;
-        int attempt = 0;
 
-        while (attempt < maxRetries) {
-            try {
-                attempt++;
-                InfoLogger::logInfo("Intento #" + std::to_string(attempt) + ": solicitando nuevo bloque para tipo " + typeid(T).name());
+        try {
+            InfoLogger::logInfo("Solicitando nuevo bloque para tipo " + std::string(typeid(T).name()));
 
-                // Llamamos a sendRequest de forma asíncrona
-                auto future = std::async(std::launch::async, [&]() {
-                    return temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name());
-                    });
+            // Llamada asíncrona a sendRequest
+            auto future = std::async(std::launch::async, [&]() {
+                return temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name());
+                });
 
-                // Esperamos la respuesta con timeout
-                if (future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
-                    response = future.get();
+            // Esperar respuesta con timeout
+            if (future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
+                response = future.get();
 
-                    if (!response.empty() && response != "Error") {
-                        break; // Éxito, salimos del bucle
-                    }
-                    else {
-                        ErrorLogger::logError("Respuesta inválida o vacía en intento #" + std::to_string(attempt) + ": " + response);
-                    }
-                }
-                else {
-                    ErrorLogger::logError("Timeout esperando respuesta del servidor en intento #" + std::to_string(attempt));
+                if (response.empty() || response == "Error") {
+                    throw std::runtime_error("Respuesta inválida del servidor: " + response);
                 }
             }
-            catch (const std::exception& e) {
-                ErrorLogger::logError("Excepción en intento #" + std::to_string(attempt) + ": " + e.what());
+            else {
+                throw std::runtime_error("Timeout esperando respuesta del servidor.");
             }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));  // Espera entre intentos
         }
-
-        // Validar respuesta final después de los intentos
-        if (response.empty() || response == "Error") {
-            std::string mensajeError = "Fallo al obtener una respuesta válida del servidor después de " + std::to_string(maxRetries) + " intentos.";
-            ErrorLogger::logError(mensajeError);
-            throw std::runtime_error(mensajeError);
+        catch (const std::exception& e) {
+            ErrorLogger::logError("Excepción al crear MPointer: " + std::string(e.what()));
+            throw;
         }
 
         // Convertir respuesta a ID
@@ -100,8 +84,6 @@ public:
             newId = std::stoi(response);
         }
         catch (const std::invalid_argument& e) {
-            std::string mensajeError = "Error al convertir la respuesta del servidor a entero: " + std::string(e.what());
-           ErrorLogger::logError(mensajeError);
             throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
         }
 
@@ -109,6 +91,7 @@ public:
         temp.id = newId;
         return temp;
     }
+
 
 
     // Operador de dereferencia
@@ -187,7 +170,7 @@ public:
                         throw std::runtime_error("Error en la solicitud al servidor.");
                     }
 
-                    InfoLogger::logInfo("Respuesta del servidor: " + response);
+                    InfoLogger::logInfo("Respuesta del servidorrrr: " + response);
                     return response;  // Éxito
                 }
                 else {

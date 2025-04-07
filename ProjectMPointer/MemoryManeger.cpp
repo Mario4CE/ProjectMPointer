@@ -292,7 +292,7 @@ void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
     fd_set writefds;
     FD_ZERO(&writefds);
     FD_SET(socket_fd, &writefds);
-    timeval timeout = { 5, 0 }; // 10 segundos
+    timeval timeout = { 1, 0 }; //segundos
 
     std::string mensaje =std::to_string(newBlock.id);
 
@@ -302,11 +302,11 @@ void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
             InfoLogger::logInfo("Mensaje enviado correctamente.");
         }
         else {
-            ErrorLogger::logError("❌ Error al enviar mensaje al cliente.");
+            ErrorLogger::logError("Error al enviar mensaje al cliente.");
         }
     }
     else {
-        ErrorLogger::logError("❌ Timeout o error en select() al esperar escritura en el socket ;(.");
+        ErrorLogger::logError("Timeout o error en select() al esperar escritura en el socket ;(.");
     }
 }
 
