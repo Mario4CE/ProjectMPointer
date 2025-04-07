@@ -9,6 +9,9 @@
 #include "SocketUtils.h"
 #include "ErrorLogger.h"
 #include "InfoLogger.h"
+#include <future>
+#include <chrono>
+#include <thread>
 
 template <typename T>
 /*
@@ -17,7 +20,14 @@ template <typename T>
 * y permite acceder a los valores almacenados en dicho bloque.
 */
 class MPointer {
+
+private:
+    int id; // ID del bloque de memoria
+    static std::string serverAddress; // Dirección del servidor
+    static int serverPort; // Puerto del servidor
+
 public:
+
     // Constructor por defecto
     MPointer() : id(-1) {} // Inicializa el ID a -1 (inv?lido)
 
@@ -39,24 +49,67 @@ public:
     }
 
     // Creaci?n de nuevo MPointer
-    static MPointer<T> New() {
-        // Necesitamos una instancia temporal para llamar a sendRequest
+    template <typename T>
+    static MPointer<T> New(int maxRetries = 5, int timeoutMs = 5000) {
         MPointer<T> temp;
-        std::string response = temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name());
+        std::string response;
+        int attempt = 0;
 
-        // Convertir la respuesta a un ID (entero)
+        while (attempt < maxRetries) {
+            try {
+                attempt++;
+                InfoLogger::logInfo("Intento #" + std::to_string(attempt) + ": solicitando nuevo bloque para tipo " + typeid(T).name());
+
+                // Llamamos a sendRequest de forma asíncrona
+                auto future = std::async(std::launch::async, [&]() {
+                    return temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name());
+                    });
+
+                // Esperamos la respuesta con timeout
+                if (future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
+                    response = future.get();
+
+                    if (!response.empty() && response != "Error") {
+                        break; // Éxito, salimos del bucle
+                    }
+                    else {
+                        ErrorLogger::logError("Respuesta inválida o vacía en intento #" + std::to_string(attempt) + ": " + response);
+                    }
+                }
+                else {
+                    ErrorLogger::logError("Timeout esperando respuesta del servidor en intento #" + std::to_string(attempt));
+                }
+            }
+            catch (const std::exception& e) {
+                ErrorLogger::logError("Excepción en intento #" + std::to_string(attempt) + ": " + e.what());
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));  // Espera entre intentos
+        }
+
+        // Validar respuesta final después de los intentos
+        if (response.empty() || response == "Error") {
+            std::string mensajeError = "Fallo al obtener una respuesta válida del servidor después de " + std::to_string(maxRetries) + " intentos.";
+            ErrorLogger::logError(mensajeError);
+            throw std::runtime_error(mensajeError);
+        }
+
+        // Convertir respuesta a ID
         int newId;
         try {
             newId = std::stoi(response);
         }
         catch (const std::invalid_argument& e) {
             std::string mensajeError = "Error al convertir la respuesta del servidor a entero: " + std::string(e.what());
-            ErrorLogger::logError(mensajeError);
-            throw std::runtime_error("Respuesta inv?lida del servidor al crear un nuevo bloque: " + response);
+           ErrorLogger::logError(mensajeError);
+            throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
         }
 
-        return MPointer<T>(newId); // Devolver un nuevo MPointer con el ID asignado
+        InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
+        temp.id = newId;
+        return temp;
     }
+
 
     // Operador de dereferencia
     T operator*() {
@@ -108,43 +161,66 @@ public:
         return id; // Devolver el ID del bloque de memoria
     }
 
-private:
-    int id; // ID del bloque de memoria
-    static std::string serverAddress; // Direcci?n del servidor
-    static int serverPort; // Puerto del servidor
+    std::string sendRequest(const std::string& request, int timeoutMs = 5000, int maxRetries = 3) {
+        int attempt = 0;
+        std::string response;
 
-    // Funci?n para enviar solicitudes al servidor
-    std::string sendRequest(const std::string& request) {
-        try {
-            // Enviar la solicitud al servidor y recibir la respuesta
-            std::string response = SocketUtils::sendRequest(serverAddress, serverPort, request);
+        while (attempt < maxRetries) {
+            try {
+                attempt++;
+                InfoLogger::logInfo("Intento #" + std::to_string(attempt) + ": Enviando solicitud al servidor...");
 
-            // Verificar si la respuesta est? vac?a o es inv?lida
-            if (response.empty()) {
-                std::string mensajeError = "El servidor no devolvi? una respuesta v?lida.";
-                ErrorLogger::logError(mensajeError);
-                throw std::runtime_error("El servidor no devolvi? una respuesta v?lida.");
+                // Lanzamos la solicitud en un hilo asincrónico
+                auto future = std::async(std::launch::async, [&]() {
+                    return SocketUtils::sendRequest(serverAddress, serverPort, request);
+                    });
+
+                // Esperamos con timeout
+                if (future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
+                    response = future.get();  // Obtener la respuesta
+
+                    // Validación de la respuesta
+                    if (response.empty()) {
+                        throw std::runtime_error("El servidor no devolvió una respuesta válida.");
+                    }
+                    else if (response == "Error") {
+                        throw std::runtime_error("Error en la solicitud al servidor.");
+                    }
+
+                    InfoLogger::logInfo("Respuesta del servidor: " + response);
+                    return response;  // Éxito
+                }
+                else {
+                    // Timeout alcanzado
+                    throw std::runtime_error("Timeout al esperar respuesta del servidor.");
+                }
             }
+            catch (const std::exception& e) {
+                std::string mensajeError = "Error en intento #" + std::to_string(attempt) + " - " + e.what();
+                ErrorLogger::logError(mensajeError);
 
-            return response; // Devolver la respuesta del servidor
+                if (attempt >= maxRetries) {
+                    throw std::runtime_error("Fallo al enviar solicitud después de " + std::to_string(maxRetries) + " intentos: " + e.what());
+                }
+
+                // Pequeña espera antes del reintento
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            }
         }
-        catch (const std::exception& e) {
-            // Capturar y relanzar excepciones con un mensaje m?s descriptivo
-            std::string mensajeError = "Error en sendRequest: " + std::string(e.what());
-            ErrorLogger::logError(mensajeError);
-            throw std::runtime_error("Error en sendRequest: " + std::string(e.what()));
-        }
+
+        throw std::runtime_error("Error desconocido en sendRequest.");
     }
+
 };
 
-// Inicializaci?n de miembros est?ticos
+// Inicializacion de miembros estaticos
 template <typename T>
 std::string MPointer<T>::serverAddress = "";
 
 template <typename T>
 int MPointer<T>::serverPort = 0;
 
-// Instanciaciones expl?citas para los tipos que usar?s
+// Instanciaciones explicitas
 template class MPointer<int>;
 template class MPointer<double>;
 template class MPointer<char>;
@@ -152,3 +228,4 @@ template class MPointer<std::string>;
 template class MPointer<float>;
 
 #endif // MPOINTER_H
+// Fin del archivo MPointer.h
