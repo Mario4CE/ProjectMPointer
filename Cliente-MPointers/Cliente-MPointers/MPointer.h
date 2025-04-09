@@ -84,8 +84,10 @@ public:
             newId = std::stoi(response);
         }
         catch (const std::invalid_argument& e) {
+            ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
             throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
         }
+
 
         InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
         temp.id = newId;
@@ -170,7 +172,7 @@ public:
                         throw std::runtime_error("Error en la solicitud al servidor.");
                     }
 
-                    InfoLogger::logInfo("Respuesta del servidorrrr: " + response);
+                    InfoLogger::logInfo("Respuesta del Server: " + response);
                     return response;  // Éxito
                 }
                 else {

@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <thread>
 #include <winsock2.h>
-#include <stdexcept>
+
 #include <fcntl.h>
 
 // --- Inicialización de Variables Estáticas ---
@@ -44,7 +44,9 @@ void MemoryManager::initialize() {
     nextId = 1;
     nextFree = 0;
 
-    size_t totalMemoryMB = static_cast<size_t>(TOTAL_MEMORY) / (1024 * 1024);
+
+    size_t totalMemoryMB = static_cast<size_t>(TOTAL_MEMORY) / static_cast<size_t>(1024 * 1024);
+
     std::cout << "Memoria inicializada con " << totalMemoryMB << " MB." << std::endl;
 }
 
@@ -218,7 +220,7 @@ std::string MemoryManager::handleCreate(const std::string& size, const std::stri
 
     // 4️⃣ Enviar mensaje de confirmación al cliente
     //sendBlockCreationMessage(newBlock);
-
+    std::to_string(newBlock.id);
     //Lo que se envia al cliente es el id del bloque
     return std::to_string(newBlock.id);
 }
@@ -296,7 +298,7 @@ void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
 
     std::string mensaje =std::to_string(newBlock.id);
 
-    int result = select(socket_fd , nullptr, &writefds, nullptr, &timeout);
+    int result = select(static_cast<int>(socket_fd), nullptr, &writefds, nullptr, &timeout);
     if (result > 0 && FD_ISSET(socket_fd, &writefds)) {
         if (enviarComando(mensaje)) {
             InfoLogger::logInfo("Mensaje enviado correctamente.");

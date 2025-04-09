@@ -21,7 +21,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
         std::string comando;
         iss >> comando;
 
-        // ----------- COMANDO NEW (TIPO DINÁMICO) -----------
+        // ----------- COMANDO NEW -----------
         if (comando == "New") {
             std::string dummy, tipo;
             iss >> dummy >> tipo;
