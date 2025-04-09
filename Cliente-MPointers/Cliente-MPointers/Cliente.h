@@ -107,7 +107,7 @@ namespace ClienteMPointers {
             // txtPeticion
             // 
             this->txtPeticion->BackColor = System::Drawing::SystemColors::InactiveCaption;
-            this->txtPeticion->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->txtPeticion->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->txtPeticion->Location = System::Drawing::Point(44, 97);
             this->txtPeticion->Name = L"txtPeticion";
@@ -130,11 +130,11 @@ namespace ClienteMPointers {
             // 
             this->lblTitle->AutoSize = true;
             this->lblTitle->BackColor = System::Drawing::Color::DarkSlateGray;
-            this->lblTitle->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->lblTitle->Font = (gcnew System::Drawing::Font(L"Arial", 36, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
-            this->lblTitle->Location = System::Drawing::Point(199, 20);
+            this->lblTitle->Location = System::Drawing::Point(127, 9);
             this->lblTitle->Name = L"lblTitle";
-            this->lblTitle->Size = System::Drawing::Size(356, 42);
+            this->lblTitle->Size = System::Drawing::Size(499, 56);
             this->lblTitle->TabIndex = 3;
             this->lblTitle->Text = L"Cliente de MPointers\r\n";
             this->lblTitle->Click += gcnew System::EventHandler(this, &Cliente::lblTitle_Click);
