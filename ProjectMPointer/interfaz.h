@@ -46,7 +46,7 @@ namespace InterfazCLI {
             // lblTitulo
             // 
             this->lblTitulo->AutoSize = true;
-            this->lblTitulo->BackColor = System::Drawing::SystemColors::GradientActiveCaption;
+            this->lblTitulo->BackColor = System::Drawing::Color::LightSeaGreen;
             this->lblTitulo->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 21.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->lblTitulo->Location = System::Drawing::Point(214, 19);
@@ -57,8 +57,8 @@ namespace InterfazCLI {
             // 
             // lblRespuesta
             // 
-            this->lblRespuesta->BackColor = System::Drawing::Color::LightGray;
-            this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->lblRespuesta->BackColor = System::Drawing::Color::LightSeaGreen;
+            this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 36, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->lblRespuesta->Location = System::Drawing::Point(12, 72);
             this->lblRespuesta->Name = L"lblRespuesta";
@@ -69,23 +69,25 @@ namespace InterfazCLI {
             // 
             // FormularioPrincipal
             // 
+            this->BackColor = System::Drawing::Color::LightSeaGreen;
             this->ClientSize = System::Drawing::Size(670, 346);
             this->Controls->Add(this->lblRespuesta);
             this->Controls->Add(this->lblTitulo);
+            this->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(0)));
+            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+            this->MaximumSize = this->Size;
+            this->MinimumSize = this->Size;
             this->Name = L"FormularioPrincipal";
             this->Text = L"Servidor";
             this->TransparencyKey = System::Drawing::Color::Red;
-            //
-            // Bloqueo del redimensionamiento de la ventana
-            //
-            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
-            this->MinimumSize = this->Size;
-            this->MaximumSize = this->Size;
-
+            this->Load += gcnew System::EventHandler(this, &FormularioPrincipal::FormularioPrincipal_Load);
             this->ResumeLayout(false);
             this->PerformLayout();
 
         }
 
+    private: System::Void FormularioPrincipal_Load(System::Object^ sender, System::EventArgs^ e) {
+    }
     };
 }

@@ -64,7 +64,7 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
             fd_set readfds;
             FD_ZERO(&readfds);
             FD_SET(clientSocket, &readfds);
-            struct timeval timeout = { 1, 0 }; // 5 segundos
+            struct timeval timeout = { 5, 0 }; // 5 segundos
 
             int result = select(0, &readfds, nullptr, nullptr, &timeout);
             if (result > 0 && FD_ISSET(clientSocket, &readfds)) {
@@ -127,7 +127,7 @@ static std::string receiveWelcomeMessage(SOCKET clientSocket, int timeoutMs, int
 
             if (welcomeBytesReceived > 0) {
                 welcomeMessage.assign(welcomeBuffer, welcomeBytesReceived);
-                InfoLogger::logInfo("Mensaje de bienvenida recibido: " + welcomeMessage);
+                InfoLogger::logInfo("Mensaje de bienvenida recibido:" + welcomeMessage);
                 return welcomeMessage;
             }
             else if (welcomeBytesReceived == 0) {
