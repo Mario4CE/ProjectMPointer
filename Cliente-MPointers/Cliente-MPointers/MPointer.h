@@ -1,4 +1,4 @@
-
+Ôªø
 #ifndef MPOINTER_H
 #define MPOINTER_H
 
@@ -23,7 +23,7 @@ class MPointer {
 
 private:
     int id; // ID del bloque de memoria
-    static std::string serverAddress; // DirecciÛn del servidor
+    static std::string serverAddress; // Direcci√≥n del servidor
     static int serverPort; // Puerto del servidor
 
 public:
@@ -48,61 +48,48 @@ public:
         serverPort = port;
     }
 
-    // Creaci?n de nuevo MPointer
-    template <typename T>
-    static MPointer<T> New(int maxRetries = 5, int timeoutMs = 5000) {
+    // Creacion de nuevo MPointer
+    static MPointer<T> New(int timeoutMs = 5000) {
         MPointer<T> temp;
         std::string response;
-        int attempt = 0;
 
-        while (attempt < maxRetries) {
-            try {
-                attempt++;
-                InfoLogger::logInfo("Intento #" + std::to_string(attempt) + ": solicitando nuevo bloque para tipo " + typeid(T).name());
+        try {
+            InfoLogger::logInfo("Solicitando nuevo bloque para tipo " + std::string(typeid(T).name()));
 
-                // Llamamos a sendRequest de forma asÌncrona
-                auto future = std::async(std::launch::async, [&]() {
-                    return temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name());
-                    });
+            // Llamada directa a sendRequest ‚Äî ya es asincr√≥nica internamente
+            response = temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name(), timeoutMs);
 
-                // Esperamos la respuesta con timeout
-                if (future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
-                    response = future.get();
+            InfoLogger::logInfo("Respuesta recibida en New: >" + response + "<");
 
-                    if (!response.empty() && response != "Error") {
-                        break; // …xito, salimos del bucle
-                    }
-                    else {
-                        ErrorLogger::logError("Respuesta inv·lida o vacÌa en intento #" + std::to_string(attempt) + ": " + response);
-                    }
-                }
-                else {
-                    ErrorLogger::logError("Timeout esperando respuesta del servidor en intento #" + std::to_string(attempt));
-                }
+            if (response.empty() || response == "Error") {
+                throw std::runtime_error("Respuesta inv√°lida del servidor: " + response);
             }
-            catch (const std::exception& e) {
-                ErrorLogger::logError("ExcepciÛn en intento #" + std::to_string(attempt) + ": " + e.what());
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));  // Espera entre intentos
+        }
+        catch (const std::exception& e) {
+            ErrorLogger::logError("Excepci√≥n al crear MPointer: " + std::string(e.what()));
+            throw;
         }
 
-        // Validar respuesta final despuÈs de los intentos
-        if (response.empty() || response == "Error") {
-            std::string mensajeError = "Fallo al obtener una respuesta v·lida del servidor despuÈs de " + std::to_string(maxRetries) + " intentos.";
-            ErrorLogger::logError(mensajeError);
-            throw std::runtime_error(mensajeError);
+        // üßº Limpiar: conservar solo los d√≠gitos
+        std::string cleanResponse;
+        for (char c : response) {
+            if (std::isdigit(static_cast<unsigned char>(c))) {
+                cleanResponse += c;
+            }
+        }
+
+        if (cleanResponse.empty()) {
+            throw std::runtime_error("La respuesta del servidor no contiene un n√∫mero v√°lido: " + response);
         }
 
         // Convertir respuesta a ID
         int newId;
         try {
-            newId = std::stoi(response);
+            newId = std::stoi(cleanResponse);
         }
-        catch (const std::invalid_argument& e) {
-            std::string mensajeError = "Error al convertir la respuesta del servidor a entero: " + std::string(e.what());
-           ErrorLogger::logError(mensajeError);
-            throw std::runtime_error("Respuesta inv·lida del servidor al crear un nuevo bloque: " + response);
+        catch (const std::exception& e) {
+            ErrorLogger::logError("Excepci√≥n al convertir respuesta a ID: " + std::string(e.what()));
+            throw std::runtime_error("Respuesta inv√°lida del servidor al crear un nuevo bloque: " + response);
         }
 
         InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
@@ -148,13 +135,13 @@ public:
 
     // Operador de asignaci?n (valor)
     void operator=(const T& value) {
-        // Convertir el valor a cadena
         std::ostringstream oss;
         oss << value;
-
-        // Enviar la solicitud al servidor para almacenar el valor
-        this->sendRequest("Set " + std::to_string(id) + " " + oss.str());
+        std::string comando = "Set " + std::to_string(id) + " " + oss.str();
+        InfoLogger::logInfo("Enviando comando: " + comando);
+        this->sendRequest(comando);
     }
+
 
     // Operador de direcci?n (obtener ID)
     int operator&() {
@@ -170,7 +157,7 @@ public:
                 attempt++;
                 InfoLogger::logInfo("Intento #" + std::to_string(attempt) + ": Enviando solicitud al servidor...");
 
-                // Lanzamos la solicitud en un hilo asincrÛnico
+                // Lanzamos la solicitud en un hilo asincr√≥nico
                 auto future = std::async(std::launch::async, [&]() {
                     return SocketUtils::sendRequest(serverAddress, serverPort, request);
                     });
@@ -179,16 +166,17 @@ public:
                 if (future.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
                     response = future.get();  // Obtener la respuesta
 
-                    // ValidaciÛn de la respuesta
+                    // Validaci√≥n de la respuesta
                     if (response.empty()) {
-                        throw std::runtime_error("El servidor no devolviÛ una respuesta v·lida.");
+                        throw std::runtime_error("El servidor no devolvi√≥ una respuesta v√°lida.");
                     }
                     else if (response == "Error") {
                         throw std::runtime_error("Error en la solicitud al servidor.");
                     }
 
-                    InfoLogger::logInfo("Respuesta del servidor: " + response);
-                    return response;  // …xito
+                    InfoLogger::logInfo("Respuesta del Server:" + response);
+                    // Convertir la respuesta a un valor de tipo T
+                    return response;  // √âxito
                 }
                 else {
                     // Timeout alcanzado
@@ -200,10 +188,10 @@ public:
                 ErrorLogger::logError(mensajeError);
 
                 if (attempt >= maxRetries) {
-                    throw std::runtime_error("Fallo al enviar solicitud despuÈs de " + std::to_string(maxRetries) + " intentos: " + e.what());
+                    throw std::runtime_error("Fallo al enviar solicitud despu√©s de " + std::to_string(maxRetries) + " intentos: " + e.what());
                 }
 
-                // PequeÒa espera antes del reintento
+                // Peque√±a espera antes del reintento
                 std::this_thread::sleep_for(std::chrono::milliseconds(300));
             }
         }
@@ -211,6 +199,27 @@ public:
         throw std::runtime_error("Error desconocido en sendRequest.");
     }
 
+    //Metodo que le envia al server el comando para que cierre el server, osea que cierre la ventana
+    static bool closeServer() {
+        try {
+            // Creamos una instancia temporal para usar sendRequest
+            MPointer<T> temp;
+            std::string response = temp.sendRequest("Cerrar");
+
+            if (response == "OK") {
+                InfoLogger::logInfo("Servidor cerrado correctamente.");
+                return true;
+            }
+            else {
+                ErrorLogger::logError("Error al cerrar el servidor: " + response);
+                return false;
+            }
+        }
+        catch (const std::exception& e) {
+            ErrorLogger::logError("Excepci√≥n al cerrar el servidor: " + std::string(e.what()));
+            return false;
+        }
+    }
 };
 
 // Inicializacion de miembros estaticos

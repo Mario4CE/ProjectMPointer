@@ -90,56 +90,57 @@ namespace ClienteMPointers {
             this->lblTitle = (gcnew System::Windows::Forms::Label());
             this->BtnConectar = (gcnew System::Windows::Forms::Button());
             this->SuspendLayout();
-            //
+            // 
             // btnCliente
-            //
-            this->btnCliente->BackColor = System::Drawing::SystemColors::InactiveCaption;
+            // 
+            this->btnCliente->BackColor = System::Drawing::SystemColors::GrayText;
             this->btnCliente->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->btnCliente->Location = System::Drawing::Point(434, 151);
             this->btnCliente->Name = L"btnCliente";
             this->btnCliente->Size = System::Drawing::Size(224, 80);
             this->btnCliente->TabIndex = 0;
-            this->btnCliente->Text = L"Enviar Petici?n";
+            this->btnCliente->Text = L"Enviar Peticion";
             this->btnCliente->UseVisualStyleBackColor = false;
             this->btnCliente->Click += gcnew System::EventHandler(this, &Cliente::btnCliente_Click);
-            //
+            // 
             // txtPeticion
-            //
-            this->txtPeticion->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            // 
+            this->txtPeticion->BackColor = System::Drawing::SystemColors::InactiveCaption;
+            this->txtPeticion->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->txtPeticion->Location = System::Drawing::Point(44, 97);
             this->txtPeticion->Name = L"txtPeticion";
             this->txtPeticion->Size = System::Drawing::Size(290, 50);
             this->txtPeticion->TabIndex = 1;
-            //
+            // 
             // lblRespuesta
-            //
-            this->lblRespuesta->BackColor = System::Drawing::Color::LightGray;
-            this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 21.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            // 
+            this->lblRespuesta->BackColor = System::Drawing::Color::DarkSlateGray;
+            this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 27.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
             this->lblRespuesta->Location = System::Drawing::Point(38, 172);
             this->lblRespuesta->Name = L"lblRespuesta";
             this->lblRespuesta->Size = System::Drawing::Size(308, 164);
             this->lblRespuesta->TabIndex = 2;
-            this->lblRespuesta->Text = L"Respuesta del servidor aparecer? aqu?.";
+            this->lblRespuesta->Text = L"Respuesta del servidor aparece aqui.";
             this->lblRespuesta->TextAlign = System::Drawing::ContentAlignment::TopCenter;
-            //
+            // 
             // lblTitle
-            //
+            // 
             this->lblTitle->AutoSize = true;
-            this->lblTitle->BackColor = System::Drawing::SystemColors::InactiveCaption;
-            this->lblTitle->Font = (gcnew System::Drawing::Font(L"Arial", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->lblTitle->BackColor = System::Drawing::Color::DarkSlateGray;
+            this->lblTitle->Font = (gcnew System::Drawing::Font(L"Arial", 36, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
-            this->lblTitle->Location = System::Drawing::Point(199, 20);
+            this->lblTitle->Location = System::Drawing::Point(127, 9);
             this->lblTitle->Name = L"lblTitle";
-            this->lblTitle->Size = System::Drawing::Size(356, 42);
+            this->lblTitle->Size = System::Drawing::Size(499, 56);
             this->lblTitle->TabIndex = 3;
             this->lblTitle->Text = L"Cliente de MPointers\r\n";
             this->lblTitle->Click += gcnew System::EventHandler(this, &Cliente::lblTitle_Click);
-            //
+            // 
             // BtnConectar
-            //
+            // 
             this->BtnConectar->BackColor = System::Drawing::SystemColors::WindowFrame;
             this->BtnConectar->Font = (gcnew System::Drawing::Font(L"Arial", 21.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
@@ -149,12 +150,13 @@ namespace ClienteMPointers {
             this->BtnConectar->TabIndex = 4;
             this->BtnConectar->Text = L"Conectar";
             this->BtnConectar->UseVisualStyleBackColor = false;
-            this->BtnConectar->Click += gcnew System::EventHandler(this, &Cliente::BtnConectar_Click); // Agregar manejador de eventos
-            //
+            this->BtnConectar->Click += gcnew System::EventHandler(this, &Cliente::BtnConectar_Click);
+            // 
             // Cliente
-            //
+            // 
             this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
             this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+            this->BackColor = System::Drawing::Color::DarkSlateGray;
             this->ClientSize = System::Drawing::Size(771, 374);
             this->Controls->Add(this->BtnConectar);
             this->Controls->Add(this->lblTitle);
@@ -168,6 +170,7 @@ namespace ClienteMPointers {
             this->Text = L"Cliente";
             this->ResumeLayout(false);
             this->PerformLayout();
+
         }
 #pragma endregion
     private: System::Void lblTitle_Click(System::Object^ sender, System::EventArgs^ e) {

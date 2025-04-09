@@ -93,7 +93,7 @@ int startServer() {
             InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Conexión establecida");
 
             // Enviar mensaje de bienvenida al cliente
-            std::string mensajeBienvenida = "¡Bienvenido al servidor!!!!!!!";
+            std::string mensajeBienvenida = "¡Bienvenid@ al servidor!";
             if (!sendToClient(connectedSocket, mensajeBienvenida)) {
                 ErrorLogger::logError("Error al enviar mensaje de bienvenida. Cerrando conexión.");
                 closesocket(connectedSocket); // Cerrar el socket si falla el envío
@@ -126,7 +126,7 @@ bool  enviarComando(const std::string& message) {
     fd_set writefds;
     FD_ZERO(&writefds);
     FD_SET(clientSocket, &writefds);
-    timeval timeout = { 5, 0 };
+    timeval timeout = { 1, 0 };
     return sendToClient(clientSocket, message);
 }
 
@@ -138,7 +138,7 @@ bool  enviarComando(const std::string& message) {
 
 bool sendToClient(SOCKET clientSocket, const std::string& message) {
     if (clientSocket == INVALID_SOCKET) {
-        ErrorLogger::logError("❌ Intento de enviar a un socket inválido.");
+        ErrorLogger::logError("Intento de enviar a un socket inválido.");
         return false;
     }
 
@@ -146,12 +146,12 @@ bool sendToClient(SOCKET clientSocket, const std::string& message) {
     fd_set writefds;
     FD_ZERO(&writefds);
     FD_SET(clientSocket, &writefds);
-    timeval timeout = { 10, 0 }; // Esperar hasta 10 segundos
+    timeval timeout = { 1, 0 }; // Esperar hasta 10 segundos
 
     int result = select(0, NULL, &writefds, NULL, &timeout);
     if (result <= 0) { // Error o timeout
         int error = WSAGetLastError();
-        ErrorLogger::logError("❌ Socket no está listo para escritura... Código de error: " + std::to_string(error));
+        ErrorLogger::logError("Socket no está listo para escritura... Codigo de error: " + std::to_string(error));
         closesocket(clientSocket); // Cerrar el socket para evitar errores futuros
         return false;
     }
@@ -160,7 +160,7 @@ bool sendToClient(SOCKET clientSocket, const std::string& message) {
     uint32_t messageLength = htonl(static_cast<uint32_t>(message.size()));
     if (send(clientSocket, reinterpret_cast<const char*>(&messageLength), sizeof(messageLength), 0) == SOCKET_ERROR) {
         int error = WSAGetLastError();
-        ErrorLogger::logError("❌ Error al enviar longitud del mensaje. Código: " + std::to_string(error));
+        ErrorLogger::logError("Error al enviar longitud del mensaje. Codigo: " + std::to_string(error));
         closesocket(clientSocket);
         return false;
     }
@@ -168,16 +168,17 @@ bool sendToClient(SOCKET clientSocket, const std::string& message) {
     // Enviar mensaje completo
     if (send(clientSocket, message.c_str(), static_cast<int>(message.size()), 0) == SOCKET_ERROR) {
         int error = WSAGetLastError();
-        ErrorLogger::logError("❌ Error al enviar mensaje. Código: " + std::to_string(error));
+        ErrorLogger::logError("Error al enviar mensaje. Codigo: " + std::to_string(error));
         closesocket(clientSocket);
         return false;
     }
 
-    InfoLogger::logInfo("✅ Mensaje enviado correctamente.");
+    InfoLogger::logInfo("Mensaje enviado correctamente.");
     return true;
 }
 
 
 int obtenerSocket() {
-    return MemoryManager::getInstance().getClientSocket();
+    return static_cast<int>(MemoryManager::getInstance().getClientSocket());
 }
+
