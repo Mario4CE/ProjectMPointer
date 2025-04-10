@@ -26,6 +26,31 @@ private:
     static std::string serverAddress; // Dirección del servidor
     static int serverPort; // Puerto del servidor
 
+    T convertResponse(const std::string& response) {
+        std::istringstream iss(response);
+        T value;
+
+        if constexpr (std::is_same_v<T, int>) {
+            iss >> value;
+        }
+        else if constexpr (std::is_same_v<T, double>) {
+            iss >> value;
+        }
+        else if constexpr (std::is_same_v<T, char>) {
+            if (!response.empty()) {
+                value = response[0];
+            }
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            iss >> value;
+        }
+        else if constexpr (std::is_same_v<T, std::string>) {
+            return response;
+        }
+
+        return value;
+    }
+
 public:
 
     // Constructor por defecto
@@ -49,70 +74,65 @@ public:
     }
 
     // Creacion de nuevo MPointer
-    static MPointer<T> New(int timeoutMs = 5000) {
-        MPointer<T> temp;
-        std::string response;
+static MPointer<T> New(int valor, int timeoutMs = 5000) {
+    MPointer<T> temp;
+    std::string response;
 
-        try {
-            InfoLogger::logInfo("Solicitando nuevo bloque para tipo " + std::string(typeid(T).name()));
+    try {
+        InfoLogger::logInfo("Solicitando nuevo bloque para tipo " + std::string(typeid(T).name()));
 
-            // Llamada directa a sendRequest — ya es asincrónica internamente
-            response = temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name(), timeoutMs);
+        // Incluye el valor en la petición al servidor
+        response = temp.sendRequest("Create " + std::string(std::to_string(valor) + " " + typeid(T).name()), timeoutMs);
 
-            InfoLogger::logInfo("Respuesta recibida en New: >" + response + "<");
+        InfoLogger::logInfo("Respuesta recibida en New: >" + response + "<");
 
-            if (response.empty() || response == "Error") {
-                throw std::runtime_error("Respuesta inválida del servidor: " + response);
-            }
+        if (response.empty() || response == "Error") {
+            throw std::runtime_error("Respuesta inválida del servidor: " + response);
         }
-        catch (const std::exception& e) {
-            ErrorLogger::logError("Excepción al crear MPointer: " + std::string(e.what()));
-            throw;
-        }
-
-        // 🧼 Limpiar: conservar solo los dígitos
-        std::string cleanResponse;
-        for (char c : response) {
-            if (std::isdigit(static_cast<unsigned char>(c))) {
-                cleanResponse += c;
-            }
-        }
-
-        if (cleanResponse.empty()) {
-            throw std::runtime_error("La respuesta del servidor no contiene un número válido: " + response);
-        }
-
-        // Convertir respuesta a ID
-        int newId;
-        try {
-            newId = std::stoi(cleanResponse);
-        }
-        catch (const std::exception& e) {
-            ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
-            throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
-        }
-
-        InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
-        temp.id = newId;
-        return temp;
     }
+    catch (const std::exception& e) {
+        ErrorLogger::logError("Excepción al crear MPointer: " + std::string(e.what()));
+        throw;
+    }
+
+    // Limpiar: conservar solo los dígitos
+    std::string cleanResponse;
+    for (char c : response) {
+        if (std::isdigit(static_cast<unsigned char>(c))) {
+            cleanResponse += c;
+        }
+    }
+
+    if (cleanResponse.empty()) {
+        throw std::runtime_error("La respuesta del servidor no contiene un número válido: " + response);
+    }
+
+    // Convertir respuesta a ID
+    int newId;
+    try {
+        newId = std::stoi(cleanResponse);
+    }
+    catch (const std::exception& e) {
+        ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
+        throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
+    }
+
+    InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
+    temp.id = newId;
+    return temp;
+}
+
 
 
     // Operador de dereferencia
     T operator*() {
-        // Solicitar el valor almacenado en el bloque de memoria
-        std::string response = this->sendRequest("Get " + std::to_string(id));
+        std::string response = sendRequest("Get " + std::to_string(id));
 
-        // Convertir la respuesta a un valor de tipo T
-        std::istringstream converter(response);
-        T value;
-        if (!(converter >> value)) {
-            std::string mensajeError = "Error al convertir la respuesta del servidor a tipo " + std::string(typeid(T).name());
-            ErrorLogger::logError(mensajeError);
-            throw std::runtime_error("Error al convertir la respuesta del servidor a tipo " + std::string(typeid(T).name()));
+        if (response.find("Error:") != std::string::npos) {
+            throw std::runtime_error(response);
         }
 
-        return value; // Devolver el valor convertido
+        return convertResponse(response);
     }
 
     // Operador de asignaci?n (copia de MPointer)
@@ -148,7 +168,7 @@ public:
         return id; // Devolver el ID del bloque de memoria
     }
 
-    std::string sendRequest(const std::string& request, int timeoutMs = 5000, int maxRetries = 3) {
+    std::string sendRequest(const std::string& request, int timeoutMs = 9000, int maxRetries = 3) {
         int attempt = 0;
         std::string response;
 

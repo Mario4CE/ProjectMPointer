@@ -23,34 +23,60 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
 
         // ----------- COMANDO NEW -----------
         if (comando == "New") {
-            std::string dummy, tipo;
-            iss >> dummy >> tipo;
+            std::string valorStr, tipo;
+            iss >> valorStr >> tipo;
 
+            std::cout << "DEBUG - tipo: " << tipo << ", valorStr: '" << valorStr << "'" << std::endl;
+
+            // Validar que valorStr no esté vacío
+            if (valorStr.empty()) {
+                respuesta = "Error: Falta el valor. Uso correcto: New <tipo> <valor>";
+                colorRespuesta = System::Drawing::Color::Red;
+                return;
+            }
+
+            int valor;
+            try {
+                valor = std::stoi(valorStr);
+            }
+            catch (const std::exception& e) {
+                respuesta = "Error: El valor proporcionado no es un número válido.";
+                colorRespuesta = System::Drawing::Color::Red;
+                return;
+            }
+
+            // Ahora sí, crear el MPointer según el tipo
             if (tipo == "int") {
-                mptrInt = new MPointer<int>(MPointer<int>::New());
-                respuesta = "Nuevo MPointer<int> creado";
+                mptrInt = new MPointer<int>(MPointer<int>::New(valor));
+                respuesta = "Nuevo MPointer<int> creado con valor " + std::to_string(valor);
             }
             else if (tipo == "double") {
-                mptrDouble = new MPointer<double>(MPointer<double>::New());
-                respuesta = "Nuevo MPointer<double> creado";
+                mptrDouble = new MPointer<double>(MPointer<double>::New(valor));
+                *mptrDouble = static_cast<double>(valor);
+                respuesta = "Nuevo MPointer<double> creado con valor " + std::to_string(valor);
             }
             else if (tipo == "char") {
-                mptrChar = new MPointer<char>(MPointer<char>::New());
-                respuesta = "Nuevo MPointer<char> creado";
+                mptrChar = new MPointer<char>(MPointer<char>::New(valor));
+                *mptrChar = static_cast<char>(valor);
+                respuesta = std::string("Nuevo MPointer<char> creado con valor '") + static_cast<char>(valor) + "'";
             }
             else if (tipo == "string") {
-                mptrStr = new MPointer<std::string>(MPointer<std::string>::New());
-                respuesta = "Nuevo MPointer<string> creado";
+                mptrStr = new MPointer<std::string>(MPointer<std::string>::New(valor));
+                *mptrStr = std::to_string(valor);
+                respuesta = "Nuevo MPointer<string> creado con valor \"" + std::to_string(valor) + "\"";
             }
             else if (tipo == "float") {
-                mptrFloat = new MPointer<float>(MPointer<float>::New());
-                respuesta = "Nuevo MPointer<float> creado";
+                mptrFloat = new MPointer<float>(MPointer<float>::New(valor));
+                *mptrFloat = static_cast<float>(valor);
+                respuesta = "Nuevo MPointer<float> creado con valor " + std::to_string(valor);
             }
             else {
                 respuesta = "Tipo no soportado: " + tipo;
                 colorRespuesta = System::Drawing::Color::Red;
             }
         }
+
+
 
         // ----------- COMANDO SET -----------
         else if (comando == "Set") {
@@ -66,37 +92,23 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
                 return;
             }
 
-            int id = std::stoi(idStr);
+            try {
+                // Crear un MPointer temporal solo para usar sendRequest
+                MPointer<int> temp;
+                std::string comando = "Set " + idStr + " " + valorStr;
+                std::string response = temp.sendRequest(comando);
 
-            // Buscar el MPointer correspondiente y hacer la asignación
-            bool asignado = false;
-
-            if (mptrInt && &(*mptrInt) == id) {
-                try {
-                    int value = std::stoi(valorStr);
-                    *mptrInt = value;  // Esto llama a operator= que envía al servidor
-                    respuesta = "Valor asignado correctamente a MPointer<int>";
-                    asignado = true;
+                if (response.find("Error:") == std::string::npos) {
+                    respuesta = "Operación exitosa! Respuesta del servidor con exito" + response;
+                    colorRespuesta = System::Drawing::Color::Green; // Color verde para éxito
                 }
-                catch (...) {
-                    respuesta = "Valor inválido para int: " + valorStr;
+                else {
+                    respuesta = "Error al asignar valor: " + response;
+                    colorRespuesta = System::Drawing::Color::Red;
                 }
             }
-            else if (mptrDouble && &(*mptrDouble) == id) {
-                try {
-                    double value = std::stod(valorStr);
-                    *mptrDouble = value;  // Esto llama a operator=
-                    respuesta = "Valor asignado correctamente a MPointer<double>";
-                    asignado = true;
-                }
-                catch (...) {
-                    respuesta = "Valor inválido para double: " + valorStr;
-                }
-            }
-            // Repetir para los otros tipos (char, string, float)...
-
-            if (!asignado) {
-                respuesta = "No se encontró un MPointer con ID " + idStr;
+            catch (const std::exception& e) {
+                respuesta = "Error al comunicarse con el servidor: " + std::string(e.what());
                 colorRespuesta = System::Drawing::Color::Red;
             }
         }
@@ -106,79 +118,40 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
             std::string idStr;
             iss >> idStr;
 
-            // Validar si el ID es un número
+            // Validar ID
             if (idStr.empty() || !std::all_of(idStr.begin(), idStr.end(), ::isdigit)) {
                 respuesta = "ID inválido: " + idStr;
                 colorRespuesta = System::Drawing::Color::Red;
             }
             else {
-                int id = std::stoi(idStr);
-                bool encontrado = false;
+                try {
+                    // Crear un MPointer temporal para usar sendRequest
+                    MPointer<int> temp;
+                    std::string comandoGet = "Get " + idStr;
+                    std::string response = temp.sendRequest(comandoGet);
 
-                // Buscar el MPointer correspondiente y obtener su valor
-                if (mptrInt && &(*mptrInt) == id) {
-                    try {
-                        int valor = **mptrInt;  // Llama a operator* que envía "Get" al servidor
-                        respuesta = "Valor (int): " + std::to_string(valor);
-                        encontrado = true;
-                    }
-                    catch (const std::exception& e) {
-                        respuesta = "Error al obtener valor: " + std::string(e.what());
+                    // Analizar la respuesta del servidor
+                    if (response.find("Error:") != std::string::npos) {
+                        respuesta = response;
                         colorRespuesta = System::Drawing::Color::Red;
                     }
-                }
-                else if (mptrDouble && &(*mptrDouble) == id) {
-                    try {
-                        double valor = **mptrDouble;
-                        respuesta = "Valor (double): " + std::to_string(valor);
-                        encontrado = true;
-                    }
-                    catch (...) {
-                        respuesta = "Error al obtener valor double";
-                        colorRespuesta = System::Drawing::Color::Red;
+                    else {
+                        respuesta = "Valor del bloque " + idStr + ": " + response;
+                        colorRespuesta = System::Drawing::Color::Green;
                     }
                 }
-                else if (mptrChar && &(*mptrChar) == id) {
-                    try {
-                        char valor = **mptrChar;
-                        respuesta = "Valor (char): " + std::string(1, valor);
-                        encontrado = true;
-                    }
-                    catch (...) {
-                        respuesta = "Error al obtener valor char";
-                        colorRespuesta = System::Drawing::Color::Red;
-                    }
-                }
-                else if (mptrStr && &(*mptrStr) == id) {
-                    try {
-                        std::string valor = **mptrStr;
-                        respuesta = "Valor (string): " + valor;
-                        encontrado = true;
-                    }
-                    catch (...) {
-                        respuesta = "Error al obtener valor string";
-                        colorRespuesta = System::Drawing::Color::Red;
-                    }
-                }
-                else if (mptrFloat && &(*mptrFloat) == id) {
-                    try {
-                        float valor = **mptrFloat;
-                        respuesta = "Valor (float): " + std::to_string(valor);
-                        encontrado = true;
-                    }
-                    catch (...) {
-                        respuesta = "Error al obtener valor float";
-                        colorRespuesta = System::Drawing::Color::Red;
-                    }
-                }
-
-                if (!encontrado) {
-                    respuesta = "No se encontró un MPointer con ID " + idStr;
+                catch (const std::exception& e) {
+                    respuesta = "Error al comunicarse con el servidor: " + std::string(e.what());
                     colorRespuesta = System::Drawing::Color::Red;
                 }
             }
+
+            // Actualizar la interfaz
+            this->lblRespuesta->ForeColor = colorRespuesta;
+            this->lblRespuesta->Text = gcnew System::String(respuesta.c_str());
         }
 
+        // ----------- COMANDO INCREASE -----------
         else if (comando == "Increase") {
             std::string id;
             iss >> id;
