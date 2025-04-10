@@ -411,40 +411,64 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
 std::string MemoryManager::handleGet(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: ID no encontrado: " + std::to_string(id));
-        ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
-        std::cerr << "Error: ID no encontrado: " << id << std::endl;
-        return "Error: ID no encontrado";
+        std::string errorMsg = "Error: ID no encontrado: " + std::to_string(id);
+        ErrorLogger::logError(errorMsg);
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario(errorMsg);
+        return errorMsg;
     }
 
-    if (blockPtr->type == "int") {
-        int value;
-        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(int));
-        return std::to_string(value);
+    try {
+        std::string valueStr;
+        std::string typeStr = blockPtr->type;
+
+        if (blockPtr->type == "int") {
+            int value;
+            std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(int));
+            valueStr = std::to_string(value);
+        }
+        else if (blockPtr->type == "double") {
+            double value;
+            std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(double));
+            valueStr = std::to_string(value);
+        }
+        else if (blockPtr->type == "char") {
+            char value;
+            std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(char));
+            valueStr = std::string(1, value);
+        }
+        else if (blockPtr->type == "float") {
+            float value;
+            std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(float));
+            valueStr = std::to_string(value);
+        }
+        else if (blockPtr->type == "string" || blockPtr->type == "str") {
+            const char* strStart = memoryPool + blockPtr->offset;
+            size_t len = strnlen(strStart, blockPtr->size);
+            valueStr = std::string(strStart, len);
+        }
+        else {
+            std::string errorMsg = "Error: Tipo de dato no soportado: " + blockPtr->type;
+            ErrorLogger::logError(errorMsg);
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario(errorMsg);
+            return errorMsg;
+        }
+
+        // Actualizar UI con mensaje que incluye ID
+        std::string uiMsg = "Valor obtenido (" + typeStr + ") en ID " +
+            std::to_string(id) + ": " + valueStr;
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario(uiMsg);
+
+        // Registrar operación exitosa
+        InfoLogger::logInfo("Get exitoso - " + uiMsg);
+
+        // Retornar solo el valor (sin ID)
+        return valueStr;
     }
-    else if (blockPtr->type == "double") {
-        double value;
-        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(double));
-        return std::to_string(value);
-    }
-    else if (blockPtr->type == "char") {
-        char value;
-        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(char));
-        return std::string(1, value);
-    }
-    else if (blockPtr->type == "float") {
-        float value;
-        std::memcpy(&value, memoryPool + blockPtr->offset, sizeof(float));
-        return std::to_string(value);
-    }
-    else if (blockPtr->type == "string" || blockPtr->type == "str") {
-        return std::string(memoryPool + blockPtr->offset, blockPtr->size);
-    }
-    else {
-        InterfazCLI::Respuestas::ActualizarLabelEnFormulario("Error: Tipo de dato no soportado: " + blockPtr->type);
-        ErrorLogger::logError("Error: Tipo de dato no soportado: " + blockPtr->type);
-        std::cerr << "Error: Tipo de dato no soportado: " << blockPtr->type << std::endl;
-        return "Error: Tipo de dato no soportado";
+    catch (const std::exception& e) {
+        std::string errorMsg = "Error al leer bloque " + std::to_string(id) + ": " + e.what();
+        ErrorLogger::logError(errorMsg);
+        InterfazCLI::Respuestas::ActualizarLabelEnFormulario(errorMsg);
+        return errorMsg;
     }
 }
 

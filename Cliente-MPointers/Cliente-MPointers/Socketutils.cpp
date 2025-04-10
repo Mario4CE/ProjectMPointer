@@ -49,6 +49,7 @@ std::string SocketUtils::sendRequest(const std::string& address, int port, const
             std::cout << "Mensaje de bienvenida recibido: " << welcomeMessage << std::endl;
             return "Conexion establecida: " + welcomeMessage;
         }
+
         else {
             if (clientSocket == INVALID_SOCKET) {
                 throw std::runtime_error("Socket no conectado");

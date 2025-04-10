@@ -26,6 +26,31 @@ private:
     static std::string serverAddress; // Dirección del servidor
     static int serverPort; // Puerto del servidor
 
+    T convertResponse(const std::string& response) {
+        std::istringstream iss(response);
+        T value;
+
+        if constexpr (std::is_same_v<T, int>) {
+            iss >> value;
+        }
+        else if constexpr (std::is_same_v<T, double>) {
+            iss >> value;
+        }
+        else if constexpr (std::is_same_v<T, char>) {
+            if (!response.empty()) {
+                value = response[0];
+            }
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            iss >> value;
+        }
+        else if constexpr (std::is_same_v<T, std::string>) {
+            return response;
+        }
+
+        return value;
+    }
+
 public:
 
     // Constructor por defecto
@@ -100,19 +125,13 @@ public:
 
     // Operador de dereferencia
     T operator*() {
-        // Solicitar el valor almacenado en el bloque de memoria
-        std::string response = this->sendRequest("Get " + std::to_string(id));
+        std::string response = sendRequest("Get " + std::to_string(id));
 
-        // Convertir la respuesta a un valor de tipo T
-        std::istringstream converter(response);
-        T value;
-        if (!(converter >> value)) {
-            std::string mensajeError = "Error al convertir la respuesta del servidor a tipo " + std::string(typeid(T).name());
-            ErrorLogger::logError(mensajeError);
-            throw std::runtime_error("Error al convertir la respuesta del servidor a tipo " + std::string(typeid(T).name()));
+        if (response.find("Error:") != std::string::npos) {
+            throw std::runtime_error(response);
         }
 
-        return value; // Devolver el valor convertido
+        return convertResponse(response);
     }
 
     // Operador de asignaci?n (copia de MPointer)
@@ -148,7 +167,7 @@ public:
         return id; // Devolver el ID del bloque de memoria
     }
 
-    std::string sendRequest(const std::string& request, int timeoutMs = 5000, int maxRetries = 3) {
+    std::string sendRequest(const std::string& request, int timeoutMs = 9000, int maxRetries = 3) {
         int attempt = 0;
         std::string response;
 
