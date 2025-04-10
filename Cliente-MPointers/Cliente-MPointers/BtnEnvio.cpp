@@ -76,8 +76,6 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
             }
         }
 
-
-
         // ----------- COMANDO SET -----------
         else if (comando == "Set") {
             std::string idStr, valorStr;
@@ -153,17 +151,57 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
 
         // ----------- COMANDO INCREASE -----------
         else if (comando == "Increase") {
-            std::string id;
-            iss >> id;
-            respuesta = "Increase " + id;
-        }
+            std::string idStr;
+            iss >> idStr;
 
+            // Validar ID
+            if (idStr.empty() || !std::all_of(idStr.begin(), idStr.end(), ::isdigit)) {
+                respuesta = "ID inválido: " + idStr;
+                colorRespuesta = System::Drawing::Color::Red;
+            }
+            else {
+                try {
+                    // Crear un MPointer temporal para usar sendRequest
+                    MPointer<int> temp(std::stoi(idStr));
+                    temp.increase();
+
+                    respuesta = "Valor incrementado para el bloque " + idStr;
+                    colorRespuesta = System::Drawing::Color::Green;
+                }
+                catch (const std::exception& e) {
+                    respuesta = "Error al incrementar valor: " + std::string(e.what());
+                    colorRespuesta = System::Drawing::Color::Red;
+                }
+            }
+            }
+
+            // ----------- COMANDO DECREASE -----------
         else if (comando == "Decrease") {
-            std::string id;
-            iss >> id;
-            respuesta = "Decrease " + id;
-        }
+                std::string idStr;
+                iss >> idStr;
 
+                // Validar ID
+                if (idStr.empty() || !std::all_of(idStr.begin(), idStr.end(), ::isdigit)) {
+                    respuesta = "ID inválido: " + idStr;
+                    colorRespuesta = System::Drawing::Color::Red;
+                }
+                else {
+                    try {
+                        // Crear un MPointer temporal para usar sendRequest
+                        MPointer<int> temp(std::stoi(idStr));
+                        temp.decrease();
+
+                        respuesta = "Valor decrementado para el bloque " + idStr;
+                        colorRespuesta = System::Drawing::Color::Green;
+                    }
+                    catch (const std::exception& e) {
+                        respuesta = "Error al decrementar valor: " + std::string(e.what());
+                        colorRespuesta = System::Drawing::Color::Red;
+                    }
+                }
+                }
+
+        // ----------- COMANDO CERRAR -----------
         else if (comando == "Cerrar") {
             try {
                 // Usamos MPointer<int> como tipo genérico para llamar a la función estática
@@ -183,6 +221,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
             }
             }
 
+            // ----------- COMANDO AYUDA -----------
         else if (comando == "Ayuda") {
             respuesta =
                 "Comandos disponibles:\n"
@@ -195,6 +234,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
                 "Estado";
         }
 
+        // ----------- COMANDO ESTADO -----------
         else if (comando == "Estado") {
             respuesta = "Estado en desarrollo";
         }
