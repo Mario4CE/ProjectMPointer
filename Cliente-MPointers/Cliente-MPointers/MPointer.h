@@ -74,53 +74,54 @@ public:
     }
 
     // Creacion de nuevo MPointer
-    static MPointer<T> New(int timeoutMs = 5000) {
-        MPointer<T> temp;
-        std::string response;
+static MPointer<T> New(int valor, int timeoutMs = 5000) {
+    MPointer<T> temp;
+    std::string response;
 
-        try {
-            InfoLogger::logInfo("Solicitando nuevo bloque para tipo " + std::string(typeid(T).name()));
+    try {
+        InfoLogger::logInfo("Solicitando nuevo bloque para tipo " + std::string(typeid(T).name()));
 
-            // Llamada directa a sendRequest — ya es asincrónica internamente
-            response = temp.sendRequest("Create " + std::to_string(sizeof(T)) + " " + typeid(T).name(), timeoutMs);
+        // Incluye el valor en la petición al servidor
+        response = temp.sendRequest("Create " + std::string(std::to_string(valor) + " " + typeid(T).name()), timeoutMs);
 
-            InfoLogger::logInfo("Respuesta recibida en New: >" + response + "<");
+        InfoLogger::logInfo("Respuesta recibida en New: >" + response + "<");
 
-            if (response.empty() || response == "Error") {
-                throw std::runtime_error("Respuesta inválida del servidor: " + response);
-            }
+        if (response.empty() || response == "Error") {
+            throw std::runtime_error("Respuesta inválida del servidor: " + response);
         }
-        catch (const std::exception& e) {
-            ErrorLogger::logError("Excepción al crear MPointer: " + std::string(e.what()));
-            throw;
-        }
-
-        // 🧼 Limpiar: conservar solo los dígitos
-        std::string cleanResponse;
-        for (char c : response) {
-            if (std::isdigit(static_cast<unsigned char>(c))) {
-                cleanResponse += c;
-            }
-        }
-
-        if (cleanResponse.empty()) {
-            throw std::runtime_error("La respuesta del servidor no contiene un número válido: " + response);
-        }
-
-        // Convertir respuesta a ID
-        int newId;
-        try {
-            newId = std::stoi(cleanResponse);
-        }
-        catch (const std::exception& e) {
-            ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
-            throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
-        }
-
-        InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
-        temp.id = newId;
-        return temp;
     }
+    catch (const std::exception& e) {
+        ErrorLogger::logError("Excepción al crear MPointer: " + std::string(e.what()));
+        throw;
+    }
+
+    // Limpiar: conservar solo los dígitos
+    std::string cleanResponse;
+    for (char c : response) {
+        if (std::isdigit(static_cast<unsigned char>(c))) {
+            cleanResponse += c;
+        }
+    }
+
+    if (cleanResponse.empty()) {
+        throw std::runtime_error("La respuesta del servidor no contiene un número válido: " + response);
+    }
+
+    // Convertir respuesta a ID
+    int newId;
+    try {
+        newId = std::stoi(cleanResponse);
+    }
+    catch (const std::exception& e) {
+        ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
+        throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
+    }
+
+    InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
+    temp.id = newId;
+    return temp;
+}
+
 
 
     // Operador de dereferencia
