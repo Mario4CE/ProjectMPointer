@@ -1,5 +1,4 @@
-﻿
-//Bibliotecas necesarias y definiciones de funciones
+﻿//Bibliotecas necesarias y definiciones de funciones
 #include "MemoryManager.h"
 #include "ActualizarRespuesta.h"
 #include "ErrorLogger.h"
@@ -123,7 +122,7 @@ std::string MemoryManager::processRequest(const std::string& request) {
         if (command == "Create") {
             std::string size, type;
             iss >> size >> type;
-            InfoLogger:: logInfo("Creando bloque de memoria con tamaño " + size + " y tipo " + type);
+            InfoLogger::logInfo("Creando bloque de memoria con tamaño " + size + " y tipo " + type);
             return handleCreate(size, type);
         }
         else if (command == "Set") {
@@ -200,7 +199,7 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
     }
 
     throw std::invalid_argument("Tipo de dato no soportado: " + type);
-    
+
 }
 
 /*
@@ -306,7 +305,7 @@ void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
     FD_SET(socket_fd, &writefds);
     timeval timeout = { 1, 0 }; //segundos
 
-    std::string mensaje =std::to_string(newBlock.id);
+    std::string mensaje = std::to_string(newBlock.id);
 
     int result = select(static_cast<int>(socket_fd), nullptr, &writefds, nullptr, &timeout);
     if (result > 0 && FD_ISSET(socket_fd, &writefds)) {
@@ -472,9 +471,7 @@ std::string MemoryManager::handleGet(int id) {
     }
 }
 
-/*
- * Incrementa el contador de referencias de un bloque.
- */
+// Incrementar el contador de referencias de un bloque de memoria
 std::string MemoryManager::handleIncreaseRefCount(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -482,15 +479,22 @@ std::string MemoryManager::handleIncreaseRefCount(int id) {
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
+
+    // Verificar si hay espacio suficiente para nuevas referencias
+    size_t currentSize = blockPtr->size;
+    if (currentSize < blockPtr->refCount + 1) {
+        // Si no hay espacio suficiente, tratamos de aumentar el tamaño de la referencia
+        // Esto podría implicar aumentar el tamaño del bloque o encontrar un bloque libre contiguo.
+        return "Error: No hay espacio suficiente para nuevas referencias.";
+    }
+
+    // Incrementar el contador de referencias
     blockPtr->refCount++;
     std::cout << "RefCount incrementado para bloque ID: " << id << std::endl;
     return "RefCount incrementado para bloque ID: " + std::to_string(id);
 }
 
-/*
- * Decrementa el contador de referencias de un bloque.
- * - Libera el bloque si el contador llega a cero.
- */
+// Decrementar el contador de referencias de un bloque de memoria
 std::string MemoryManager::handleDecreaseRefCount(int id) {
     auto blockPtr = findBlock(id);
     if (!blockPtr) {
@@ -498,15 +502,21 @@ std::string MemoryManager::handleDecreaseRefCount(int id) {
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
     }
+
+    // Decrementar el contador de referencias
     blockPtr->refCount--;
+    std::cout << "RefCount decrementado para bloque ID: " << id << std::endl;
+
+    // Si el contador de referencias llega a cero, liberar el bloque
     if (blockPtr->refCount == 0) {
         releaseMemory(id);
         std::cout << "Bloque ID " << id << " liberado (refCount = 0)" << std::endl;
         return "Bloque ID " + std::to_string(id) + " liberado (refCount = 0)";
     }
-    std::cout << "RefCount decrementado para bloque ID: " << id << std::endl;
+
     return "RefCount decrementado para bloque ID: " + std::to_string(id);
 }
+
 
 // --- Funciones de Gestión de Memoria ---
 
@@ -575,3 +585,6 @@ MemoryManager::MemoryBlock* MemoryManager::findBlock(int id) {
     }
     return &it->second;
 }
+
+
+

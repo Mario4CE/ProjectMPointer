@@ -1,3 +1,4 @@
+ï»¿
 
 #ifndef MEMORYMANAGER_H
 #define MEMORYMANAGER_H
@@ -76,14 +77,14 @@ private:
     static std::string handleGet(int id); //Metodo Get
     static std::string handleIncreaseRefCount(int id); //Metodo IncreaseRefCount
     static std::string handleDecreaseRefCount(int id); //Metodo DecreaseRefCount
-    static bool validateSizeForType(const std::string& type, size_t size); //Metodo para validar el tamaño del tipo
+    static bool validateSizeForType(const std::string& type, size_t size); //Metodo para validar el tamaï¿½o del tipo
     static bool allocateMemory(size_t size, MemoryBlock& block); //Metodo para asignar memoria
     static void releaseMemory(int id); //Metodo para liberar memoria
     static MemoryBlock* findBlock(int id); //Metodo para encontrar un bloque
     static bool validateDataType(const std::string& blockType, const std::string& value, size_t expectedSize);
     //Metodo para validar el tipo de dato
     static std::string validateBlockSize(const std::string& size, const std::string& type, size_t& blockSize);
-    //Metodo para validar el tamaño del bloque
+    //Metodo para validar el tamaï¿½o del bloque
     static void updateUIWithBlockInfo(const MemoryBlock& newBlock); //Metodo para actualizar la UI con la informacion del bloque
     static void sendBlockCreationMessage(const MemoryBlock& newBlock); //Metodo para enviar un mensaje al cliente con la informacion del bloque
     static MemoryBlock createMemoryBlock(size_t blockSize, const std::string& type); //Metodo para crear un bloque de memoria
