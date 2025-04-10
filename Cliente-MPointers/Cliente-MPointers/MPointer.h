@@ -54,7 +54,7 @@ private:
 public:
 
     // Constructor por defecto
-    MPointer() : id(-1) {} // Inicializa el ID a -1 (inv?lido)
+    MPointer() : id(1) {} // Inicializa el ID
 
     // Constructor con ID espec?fico
     MPointer(int id) : id(id) {}
@@ -67,7 +67,7 @@ public:
         }
     }
 
-    // Inicializaci?n est?tica
+    // Inicializacion estatica
     static void Init(const std::string& address, int port) {
         serverAddress = address;
         serverPort = port;
@@ -153,7 +153,7 @@ static MPointer<T> New(int valor, int timeoutMs = 5000) {
         return *this; // Devolver una referencia a este objeto
     }
 
-    // Operador de asignaci?n (valor)
+    // Operador de asignacion (valor)
     void operator=(const T& value) {
         std::ostringstream oss;
         oss << value;
@@ -239,6 +239,28 @@ static MPointer<T> New(int valor, int timeoutMs = 5000) {
             ErrorLogger::logError("Excepción al cerrar el servidor: " + std::string(e.what()));
             return false;
         }
+    }
+
+    // Método para incrementar el valor almacenado en el MPointer
+    void increase() {
+        std::string response = sendRequest("Increase " + std::to_string(id));
+
+        if (response.find("Error:") != std::string::npos) {
+            throw std::runtime_error(response);
+        }
+
+        InfoLogger::logInfo("Valor incrementado para el bloque " + std::to_string(id));
+    }
+
+    // Método para decrementar el valor almacenado en el MPointer
+    void decrease() {
+        std::string response = sendRequest("Decrease " + std::to_string(id));
+
+        if (response.find("Error:") != std::string::npos) {
+            throw std::runtime_error(response);
+        }
+
+        InfoLogger::logInfo("Valor decrementado para el bloque " + std::to_string(id));
     }
 };
 
