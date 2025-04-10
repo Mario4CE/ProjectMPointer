@@ -66,37 +66,23 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
                 return;
             }
 
-            int id = std::stoi(idStr);
+            try {
+                // Crear un MPointer temporal solo para usar sendRequest
+                MPointer<int> temp;
+                std::string comando = "Set " + idStr + " " + valorStr;
+                std::string response = temp.sendRequest(comando);
 
-            // Buscar el MPointer correspondiente y hacer la asignación
-            bool asignado = false;
-
-            if (mptrInt && &(*mptrInt) == id) {
-                try {
-                    int value = std::stoi(valorStr);
-                    *mptrInt = value;  // Esto llama a operator= que envía al servidor
-                    respuesta = "Valor asignado correctamente a MPointer<int>";
-                    asignado = true;
+                if (response.find("Error:") == std::string::npos) {
+                    respuesta = "Operación exitosa! Respuesta del servidor con exito" + response;
+                    colorRespuesta = System::Drawing::Color::Green; // Color verde para éxito
                 }
-                catch (...) {
-                    respuesta = "Valor inválido para int: " + valorStr;
+                else {
+                    respuesta = "Error al asignar valor: " + response;
+                    colorRespuesta = System::Drawing::Color::Red;
                 }
             }
-            else if (mptrDouble && &(*mptrDouble) == id) {
-                try {
-                    double value = std::stod(valorStr);
-                    *mptrDouble = value;  // Esto llama a operator=
-                    respuesta = "Valor asignado correctamente a MPointer<double>";
-                    asignado = true;
-                }
-                catch (...) {
-                    respuesta = "Valor inválido para double: " + valorStr;
-                }
-            }
-            // Repetir para los otros tipos (char, string, float)...
-
-            if (!asignado) {
-                respuesta = "No se encontró un MPointer con ID " + idStr;
+            catch (const std::exception& e) {
+                respuesta = "Error al comunicarse con el servidor: " + std::string(e.what());
                 colorRespuesta = System::Drawing::Color::Red;
             }
         }
