@@ -197,24 +197,53 @@ bool MemoryManager::validateSizeForType(const std::string& type, size_t size) {
  * - Envía un mensaje al cliente.
  */
 std::string MemoryManager::handleCreate(const std::string& size, const std::string& type) {
+    // Variables estáticas para el bloque de memoria
     size_t blockSize;
+    static bool firstCall = true;
 
-    // 1️⃣ Validar tamaño
+    // 1️⃣ Validar parámetros de entrada
+    if (size.empty() || type.empty()) {
+        return "Error: Tamaño o tipo no pueden estar vacíos";
+    }
+
+    // 2️⃣ Validar tamaño
     std::string validationError = validateBlockSize(size, type, blockSize);
-    if (!validationError.empty()) return validationError;
+    if (!validationError.empty()) {
+        ErrorLogger::logError("Error validación: " + validationError);
+        return validationError;
+    }
 
-    // 2️⃣ Crear y almacenar bloque
+    // 3️⃣ Crear bloque de memoria
     MemoryBlock newBlock = createMemoryBlock(blockSize, type);
-    if (newBlock.id == -1) return "Error: No hay espacio suficiente";
+    if (newBlock.id == -1) {
+        std::string error = "Error: No hay espacio suficiente";
+        ErrorLogger::logError(error);
+        return error;
+    }
 
-    // 3️⃣ Actualizar UI y log
+    // 4️⃣ Inicializar memoria
+    std::memset(memoryPool + newBlock.offset, 0, newBlock.size);
+
+    // 5️⃣ Actualizar UI
     updateUIWithBlockInfo(newBlock);
 
-    // 4️⃣ Enviar mensaje de confirmación al cliente
-    //sendBlockCreationMessage(newBlock);
-    std::to_string(newBlock.id);
-    //Lo que se envia al cliente es el id del bloque
-    return std::to_string(newBlock.id);
+    // 6️⃣ Preparar respuesta para el cliente
+    std::string response = std::to_string(newBlock.id);
+
+    // 7️⃣ Validar que la respuesta no esté vacía
+    if (response.empty()) {
+        ErrorLogger::logError("Error: ID generado es inválido");
+        return "Error: No se pudo generar ID válido";
+    }
+
+    if (firstCall) {
+        // 8️⃣ Enviar mensaje al cliente
+        sendBlockCreationMessage(newBlock);
+        firstCall = false;
+    }
+
+    // 9️⃣ Retornar respuesta validada
+    return response;
 }
 
 /**
@@ -280,7 +309,7 @@ void MemoryManager::updateUIWithBlockInfo(const MemoryBlock& newBlock) {
  */
 void MemoryManager::sendBlockCreationMessage(const MemoryBlock& newBlock) {
     SOCKET socket_fd = 12345;
-    int intentosMaximos = 2;
+    int intentosMaximos = 4;
     int intentos = 0;
     if (socket_fd == INVALID_SOCKET) {
         ErrorLogger::logError("Socket inválido, no se pudo enviar mensaje.");
@@ -338,7 +367,7 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
     }
 
     try {
-        if (blockPtr->refCount > 0) {
+        if (blockPtr->refCount > 1) {
             // Paso 1: Leer el valor actual como string (convertir si es binario)
             std::string currentValue;
             if (blockPtr->type == "int") {
@@ -426,8 +455,6 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
 }
 
 
-
-
 /*
  * Obtiene el valor de un bloque de memoria.
  * - Lee el valor del bloque y lo devuelve como string.
@@ -472,6 +499,7 @@ std::string MemoryManager::handleGet(int id) {
         else {
             std::string errorMsg = "Error: RefCount " + std::to_string(currentRefCount)
                 + " fuera de rango. Máximo: " + std::to_string(parts.size() - 1);
+            InterfazCLI::Respuestas::ActualizarLabelEnFormulario(errorMsg);
             ErrorLogger::logError(errorMsg);
             return errorMsg;
         }
@@ -522,6 +550,8 @@ std::string MemoryManager::handleIncreaseRefCount(int id) {
     // Construir mensaje de log (para el usuario, se muestra lo que hay en el bloque)
     std::string logMessage = "Increase: refCount incrementado para bloque ID " + std::to_string(id);
     logMessage += " - Dato actualizado: " + std::string(memoryPool + blockPtr->offset);
+    
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario(logMessage);
     InfoLogger::logInfo(logMessage);
     return logMessage;
 }

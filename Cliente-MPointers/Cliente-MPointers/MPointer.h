@@ -130,9 +130,7 @@ public:
             ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
             throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
         }
-
-        InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
-        temp.id = newId;
+        temp.id = newId+1;
         return temp;
     }
 
