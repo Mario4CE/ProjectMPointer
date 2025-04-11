@@ -237,7 +237,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
         // ----------- COMANDO ESTADO -----------
         else if (comando == "Estado") {
             respuesta = "Estado en desarrollo";
-        }
+        } 
 
         else {
             respuesta = "Error: Comando no reconocido.";
