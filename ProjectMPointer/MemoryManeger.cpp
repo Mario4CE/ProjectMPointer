@@ -47,6 +47,8 @@ void MemoryManager::initialize() {
     size_t totalMemoryMB = static_cast<size_t>(TOTAL_MEMORY) / static_cast<size_t>(1024 * 1024);
 
     std::cout << "Memoria inicializada con " << totalMemoryMB << " MB." << std::endl;
+
+    startCleanupTask();
 }
 
 /*
@@ -622,6 +624,48 @@ MemoryManager::MemoryBlock* MemoryManager::findBlock(int id) {
     }
     return &it->second;
 }
+
+void MemoryManager::cleanup() {
+    std::vector<int> blocksToRemove;
+    // Recorrer todos los bloques y buscar los que cumplen con la condición.
+    for (const auto& pair : memoryBlocks) {
+        const MemoryBlock& block = pair.second;
+        // Revisar si el bloque tiene refCount 0.
+        if (block.refCount == 0) {
+            // Verificar si no hay ningún dato guardado (todo el bloque en 0).
+            bool empty = true;
+            char* dataStart = memoryPool + block.offset;
+            for (size_t i = 0; i < block.size; ++i) {
+                if (dataStart[i] != 0) {
+                    empty = false;
+                    break;
+                }
+            }
+            if (empty) {
+                blocksToRemove.push_back(pair.first);
+            }
+        }
+    }
+
+    // Eliminar los bloques que cumplen con la condición.
+    for (int id : blocksToRemove) {
+        releaseMemory(id);
+        InfoLogger::logInfo("Cleanup: Bloque ID " + std::to_string(id) + " liberado por falta de referencias y sin datos.");
+    }
+
+    // Actualizar el estado de la memoria luego de la limpieza.
+    MemoryLogger::logMemoryState(getMemoryState());
+}
+
+void MemoryManager::startCleanupTask() {
+    std::thread([]() {
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::seconds(45));
+            MemoryManager::cleanup();
+        }
+        }).detach();
+}
+
 
 
 

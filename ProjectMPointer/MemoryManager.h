@@ -78,6 +78,8 @@ public:
     static std::string processRequest(const std::string& request); //Metodo para procesar la peticion
     static void initialize(); //Metodo para inicializar la memoria
     static std::vector<std::string> getMemoryState(); //Metodo para obtener el estado de la memoria
+    static void cleanup();
+    static void startCleanupTask();
 
 public:
     SOCKET clientSocket;
