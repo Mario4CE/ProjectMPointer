@@ -64,41 +64,27 @@ std::vector<std::string> MemoryManager::getMemoryState() {
             << ", RefCount: " << block.second.refCount
             << ", Dirección: " << static_cast<void*>(memoryPool + block.second.offset);
 
-        // Mostrar el valor actual almacenado en el bloque
-        if (block.second.type == "int") {
-            int value;
-            std::memcpy(&value, memoryPool + block.second.offset, sizeof(int));
-            ss << ", Dato: " << value;
-        }
-        else if (block.second.type == "double") {
-            double value;
-            std::memcpy(&value, memoryPool + block.second.offset, sizeof(double));
-            ss << ", Dato: " << value;
-        }
-        else if (block.second.type == "char") {
-            char value;
-            std::memcpy(&value, memoryPool + block.second.offset, sizeof(char));
-            ss << ", Dato: '" << value << "'";
-        }
-        else if (block.second.type == "float") {
-            float value;
-            std::memcpy(&value, memoryPool + block.second.offset, sizeof(float));
-            ss << ", Dato: " << value;
+        // Siempre leer como string, porque puede haber múltiples valores separados por coma
+        const char* dataStart = memoryPool + block.second.offset;
+        size_t len = strnlen(dataStart, block.second.size);
+        std::string dataStr(dataStart, len);
+
+        // Solo los char van entre comillas simples, los string entre comillas dobles
+        if (block.second.type == "char") {
+            ss << ", Dato: '" << dataStr << "'";
         }
         else if (block.second.type == "string" || block.second.type == "str") {
-            // Para strings, mostramos hasta el primer null terminator o el tamaño completo
-            const char* strStart = memoryPool + block.second.offset;
-            size_t len = strnlen(strStart, block.second.size);
-            ss << ", Dato: \"" << std::string(strStart, len) << "\"";
+            ss << ", Dato: \"" << dataStr << "\"";
         }
         else {
-            ss << ", Dato: [tipo desconocido]";
+            ss << ", Dato: " << dataStr;
         }
 
         state.push_back(ss.str());
     }
     return state;
 }
+
 
 // --- Funciones de Procesamiento de Peticiones ---
 
@@ -136,12 +122,12 @@ std::string MemoryManager::processRequest(const std::string& request) {
             iss >> id;
             return handleGet(id);
         }
-        else if (command == "IncreaseRefCount") {
+        else if (command == "Increase") {
             int id;
             iss >> id;
             return handleIncreaseRefCount(id);
         }
-        else if (command == "DecreaseRefCount") {
+        else if (command == "Decrease") {
             int id;
             iss >> id;
             return handleDecreaseRefCount(id);
@@ -350,51 +336,61 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
     }
 
     try {
-        // Limpiar el bloque de memoria antes de asignar nuevo valor
-        std::memset(memoryPool + blockPtr->offset, 0, blockPtr->size);
+        if (blockPtr->refCount > 0) {
+            // Tratar cualquier tipo como string cuando refCount > 0
+            const char* currentData = memoryPool + blockPtr->offset;
+            std::string currentValue(currentData);
 
-        if (blockPtr->type == "int") {
-            int intValue = std::stoi(value);
-            std::memcpy(memoryPool + blockPtr->offset, &intValue, sizeof(int));
-        }
-        else if (blockPtr->type == "double") {
-            double doubleValue = std::stod(value);
-            std::memcpy(memoryPool + blockPtr->offset, &doubleValue, sizeof(double));
-        }
-        else if (blockPtr->type == "char") {
-            if (value.size() != 1) {
-                throw std::invalid_argument("El valor para char debe ser un solo carácter.");
+            std::string newValue = currentValue.empty() ? value : (currentValue + "," + value);
+
+            if (newValue.size() >= blockPtr->size) {
+                throw std::invalid_argument("El nuevo valor excede el tamaño del bloque.");
             }
-            char charValue = value[0];
-            std::memcpy(memoryPool + blockPtr->offset, &charValue, sizeof(char));
-        }
-        else if (blockPtr->type == "float") {
-            float floatValue = std::stof(value);
-            std::memcpy(memoryPool + blockPtr->offset, &floatValue, sizeof(float));
-        }
-        else if (blockPtr->type == "string" || blockPtr->type == "str") {
-            if (value.size() > blockPtr->size) {
-                throw std::invalid_argument("El valor es demasiado grande para el bloque asignado.");
-            }
-            // Copiar el string incluyendo el null terminator si hay espacio
-            size_t copySize = (std::min)(value.size(), blockPtr->size - 1);
-            std::memcpy(memoryPool + blockPtr->offset, value.c_str(), copySize);
-            // Asegurar null terminator
-            *(memoryPool + blockPtr->offset + copySize) = '\0';
+
+            std::memset(memoryPool + blockPtr->offset, 0, blockPtr->size);
+            std::strncpy(memoryPool + blockPtr->offset, newValue.c_str(), blockPtr->size - 1);
+
         }
         else {
-            throw std::invalid_argument("Tipo de dato no soportado: " + blockPtr->type);
+            // refCount == 0: comportamiento normal por tipo
+            std::memset(memoryPool + blockPtr->offset, 0, blockPtr->size);
+
+            if (blockPtr->type == "int") {
+                int intValue = std::stoi(value);
+                std::memcpy(memoryPool + blockPtr->offset, &intValue, sizeof(int));
+            }
+            else if (blockPtr->type == "double") {
+                double doubleValue = std::stod(value);
+                std::memcpy(memoryPool + blockPtr->offset, &doubleValue, sizeof(double));
+            }
+            else if (blockPtr->type == "char") {
+                if (value.size() != 1) {
+                    throw std::invalid_argument("El valor para char debe ser un solo carácter.");
+                }
+                char charValue = value[0];
+                std::memcpy(memoryPool + blockPtr->offset, &charValue, sizeof(char));
+            }
+            else if (blockPtr->type == "float") {
+                float floatValue = std::stof(value);
+                std::memcpy(memoryPool + blockPtr->offset, &floatValue, sizeof(float));
+            }
+            else if (blockPtr->type == "string" || blockPtr->type == "str") {
+                size_t copySize = (std::min)(value.size(), blockPtr->size - 1);
+                std::memcpy(memoryPool + blockPtr->offset, value.c_str(), copySize);
+                *(memoryPool + blockPtr->offset + copySize) = '\0';
+            }
+            else {
+                throw std::invalid_argument("Tipo de dato no soportado: " + blockPtr->type);
+            }
         }
 
-        // Forzar actualización del estado en memoria
         memoryBlocks[id] = *blockPtr;
         MemoryLogger::logMemoryState(getMemoryState());
 
-        // Actualizar la UI
-        std::string successMsg = "Valor asignado correctamente en ID: " + std::to_string(id);
+        std::string successMsg = "Valor actualizado correctamente en ID: " + std::to_string(id);
         InterfazCLI::Respuestas::ActualizarLabelEnFormulario(successMsg);
 
-        return "Valor actualizado correctamente en ID: " + std::to_string(id);
+        return successMsg;
     }
     catch (const std::exception& e) {
         std::string errorMsg = "Error al asignar valor: " + std::string(e.what());
@@ -402,6 +398,9 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
         return errorMsg;
     }
 }
+
+
+
 
 /*
  * Obtiene el valor de un bloque de memoria.
@@ -471,32 +470,52 @@ std::string MemoryManager::handleGet(int id) {
     }
 }
 
-// Incrementar el contador de referencias de un bloque de memoria
 std::string MemoryManager::handleIncreaseRefCount(int id) {
-    auto blockPtr = findBlock(id);
+    auto blockPtr = findBlock(id);  // Buscar el bloque con el id indicado
     if (!blockPtr) {
         ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
-        std::cerr << "Error: ID no encontrado: " << id << std::endl;
         return "Error: ID no encontrado";
-    }
-
-    // Verificar si hay espacio suficiente para nuevas referencias
-    size_t currentSize = blockPtr->size;
-    if (currentSize < blockPtr->refCount + 1) {
-        // Si no hay espacio suficiente, tratamos de aumentar el tamaño de la referencia
-        // Esto podría implicar aumentar el tamaño del bloque o encontrar un bloque libre contiguo.
-        return "Error: No hay espacio suficiente para nuevas referencias.";
     }
 
     // Incrementar el contador de referencias
     blockPtr->refCount++;
-    std::cout << "RefCount incrementado para bloque ID: " << id << std::endl;
-    return "RefCount incrementado para bloque ID: " + std::to_string(id);
+
+    // Para el tipo string (o str) la idea es que al incrementar se añada al valor almacenado una coma y el nuevo dato.
+    if (blockPtr->type == "string" || blockPtr->type == "str") {
+        // Leer el contenido actual
+        const char* currentContent = memoryPool + blockPtr->offset;
+        std::string newContent(currentContent);
+        // Si ya existe contenido, se concatena una coma y un espacio, sino, se deja tal cual.
+        if (!newContent.empty()) {
+            newContent += ", ";
+        }
+        newContent += "Valor " + std::to_string(blockPtr->refCount);
+        // Verificar que el nuevo contenido quepa en el bloque
+        if (newContent.size() >= blockPtr->size)
+            throw std::invalid_argument("El contenido resultante es demasiado grande para el bloque asignado.");
+        std::memset(memoryPool + blockPtr->offset, 0, blockPtr->size);
+        std::memcpy(memoryPool + blockPtr->offset, newContent.c_str(), newContent.size());
+    }
+    else {
+        // Para otros tipos, si se desea hacer algo similar se podría extender la lógica.
+        // En este ejemplo solo modificamos los bloques de tipo string.
+    }
+
+    // Actualizar el estado en el mapa y en el log
+    memoryBlocks[id] = *blockPtr;
+    MemoryLogger::logMemoryState(getMemoryState());
+
+    // Construir mensaje de log (para el usuario, se muestra lo que hay en el bloque)
+    std::string logMessage = "Increase: refCount incrementado para bloque ID " + std::to_string(id);
+    logMessage += " - Dato actualizado: " + std::string(memoryPool + blockPtr->offset);
+    InfoLogger::logInfo(logMessage);
+    return logMessage;
 }
 
-// Decrementar el contador de referencias de un bloque de memoria
+
+// Decrementar el contador de referencias sin eliminar las referencias, solo restando el refCount
 std::string MemoryManager::handleDecreaseRefCount(int id) {
-    auto blockPtr = findBlock(id);
+    auto blockPtr = findBlock(id);  // Buscar el bloque de memoria con el id dado
     if (!blockPtr) {
         ErrorLogger::logError("Error: ID no encontrado: " + std::to_string(id));
         std::cerr << "Error: ID no encontrado: " << id << std::endl;
@@ -504,18 +523,36 @@ std::string MemoryManager::handleDecreaseRefCount(int id) {
     }
 
     // Decrementar el contador de referencias
-    blockPtr->refCount--;
-    std::cout << "RefCount decrementado para bloque ID: " << id << std::endl;
+    blockPtr->refCount--;  // Decrementamos en 1 el refCount del bloque
 
     // Si el contador de referencias llega a cero, liberar el bloque
-    if (blockPtr->refCount == 0) {
-        releaseMemory(id);
+    if (blockPtr->refCount < 0) {
+        releaseMemory(id);  // Liberar el bloque de memoria
         std::cout << "Bloque ID " << id << " liberado (refCount = 0)" << std::endl;
         return "Bloque ID " + std::to_string(id) + " liberado (refCount = 0)";
     }
 
-    return "RefCount decrementado para bloque ID: " + std::to_string(id);
+    // Mostrar las referencias actuales
+    std::string logMessage = "RefCount decrementado para bloque ID: " + std::to_string(id);
+    logMessage += " - Referencias: ";
+    for (const auto& ref : blockPtr->references) {
+        logMessage += ref + ", ";
+    }
+    if (!blockPtr->references.empty()) {
+        logMessage = logMessage.substr(0, logMessage.length() - 2);  // Eliminar la última coma
+    }
+
+    std::cout << logMessage << std::endl;
+    InfoLogger::logInfo(logMessage);
+
+    MemoryLogger::logMemoryState(getMemoryState());
+
+    std::string successMsg = "RefCount decrementado para bloque ID: " + std::to_string(id) + " - Referencias: " + logMessage;
+    InterfazCLI::Respuestas::ActualizarLabelEnFormulario(successMsg);
+
+    return "RefCount decrementado para bloque ID: " + std::to_string(id) + " - Referencias: " + logMessage;
 }
+
 
 
 // --- Funciones de Gestión de Memoria ---

@@ -60,12 +60,6 @@ public:
     MPointer(int id) : id(id) {}
 
     // Destructor
-    ~MPointer() {
-        if (id != -1) {
-            // Notificar al Memory Manager que se destruy? una referencia
-            this->sendRequest("DecreaseRefCount " + std::to_string(id));
-        }
-    }
 
     // Inicializacion estatica
     static void Init(const std::string& address, int port) {

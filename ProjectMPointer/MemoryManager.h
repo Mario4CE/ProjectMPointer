@@ -35,14 +35,33 @@ public:
         int id;
         size_t size;
         size_t offset;
-        int refCount;
         std::string type;
+        int refCount;
+        std::vector<std::string> references; // Para almacenar varias referencias
 
-        MemoryBlock() : id(0), size(0), offset(0), refCount(0), type("") {}
-        MemoryBlock(int i, size_t s, size_t o, const std::string& t)
-            : id(i), size(s), offset(o), refCount(1), type(t) {
+        // Constructor predeterminado
+        MemoryBlock() : id(0), size(0), offset(0), type(""), refCount(0) {}
+
+        // Constructor con parámetros
+        MemoryBlock(int id, size_t size, size_t offset, const std::string& type)
+            : id(id), size(size), offset(offset), type(type), refCount(0) {
+        }
+
+        // Método para agregar una referencia
+        void addReference(const std::string& ref) {
+            references.push_back(ref); // Agregar la referencia al vector
+            refCount++; // Actualizar el contador de referencias
+        }
+
+        // Método para actualizar una referencia existente (si es necesario)
+        void updateReference(int index, const std::string& newRef) {
+            if (index >= 0 && index < references.size()) {
+                references[index] = newRef; // Actualiza la referencia en el índice especificado
+            }
         }
     };
+
+
 
     static inline constexpr size_t TOTAL_MEMORY = 1024 * 1024 * 1024; // 1GB total de memoria para el pool
 
