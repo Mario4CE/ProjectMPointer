@@ -97,7 +97,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
                 std::string response = temp.sendRequest(comando);
 
                 if (response.find("Error:") == std::string::npos) {
-                    respuesta = "Operación exitosa! Respuesta del servidor con exito" + response;
+                    respuesta = "Operación exitosa! Respuesta del servidor con exito";
                     colorRespuesta = System::Drawing::Color::Green; // Color verde para éxito
                 }
                 else {
@@ -134,7 +134,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
                         colorRespuesta = System::Drawing::Color::Red;
                     }
                     else {
-                        respuesta = "Valor del bloque mostrado en el server" + idStr + ": " + response;
+                        respuesta = "Valor del bloque mostrado en el server" + idStr ;
                         colorRespuesta = System::Drawing::Color::Green;
                     }
                 }

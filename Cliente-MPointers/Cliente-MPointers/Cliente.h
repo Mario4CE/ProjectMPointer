@@ -119,9 +119,9 @@ namespace ClienteMPointers {
             this->lblRespuesta->BackColor = System::Drawing::Color::DarkSlateGray;
             this->lblRespuesta->Font = (gcnew System::Drawing::Font(L"Arial Narrow", 27.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(0)));
-            this->lblRespuesta->Location = System::Drawing::Point(38, 172);
+            this->lblRespuesta->Location = System::Drawing::Point(12, 172);
             this->lblRespuesta->Name = L"lblRespuesta";
-            this->lblRespuesta->Size = System::Drawing::Size(308, 164);
+            this->lblRespuesta->Size = System::Drawing::Size(362, 193);
             this->lblRespuesta->TabIndex = 2;
             this->lblRespuesta->Text = L"Respuesta del servidor aparece aqui.";
             this->lblRespuesta->TextAlign = System::Drawing::ContentAlignment::TopCenter;
