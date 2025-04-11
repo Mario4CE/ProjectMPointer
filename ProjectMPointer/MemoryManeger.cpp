@@ -339,22 +339,46 @@ std::string MemoryManager::handleSet(int id, const std::string& value) {
 
     try {
         if (blockPtr->refCount > 0) {
-            // Tratar cualquier tipo como string cuando refCount > 0
-            const char* currentData = memoryPool + blockPtr->offset;
-            std::string currentValue(currentData);
+            // Paso 1: Leer el valor actual como string (convertir si es binario)
+            std::string currentValue;
+            if (blockPtr->type == "int") {
+                int currentInt;
+                std::memcpy(&currentInt, memoryPool + blockPtr->offset, sizeof(int));
+                currentValue = std::to_string(currentInt);
+            }
+            else if (blockPtr->type == "double") {
+                double currentDouble;
+                std::memcpy(&currentDouble, memoryPool + blockPtr->offset, sizeof(double));
+                currentValue = std::to_string(currentDouble);
+            }
+            else if (blockPtr->type == "float") {
+                float currentFloat;
+                std::memcpy(&currentFloat, memoryPool + blockPtr->offset, sizeof(float));
+                currentValue = std::to_string(currentFloat);
+            }
+            else if (blockPtr->type == "char") {
+                char currentChar;
+                std::memcpy(&currentChar, memoryPool + blockPtr->offset, sizeof(char));
+                currentValue = std::string(1, currentChar);
+            }
+            else { // Para strings y otros tipos
+                const char* currentData = memoryPool + blockPtr->offset;
+                currentValue = std::string(currentData);
+            }
 
+            // Paso 2: Concatenar el nuevo valor con una coma
             std::string newValue = currentValue.empty() ? value : (currentValue + "," + value);
 
+            // Paso 3: Validar tamaño y guardar como string
             if (newValue.size() >= blockPtr->size) {
                 throw std::invalid_argument("El nuevo valor excede el tamaño del bloque.");
             }
 
             std::memset(memoryPool + blockPtr->offset, 0, blockPtr->size);
             std::strncpy(memoryPool + blockPtr->offset, newValue.c_str(), blockPtr->size - 1);
-
         }
         else {
-            // refCount == 0: comportamiento normal por tipo
+            // refCount == 0: Comportamiento original (guardar en formato binario o string)
             std::memset(memoryPool + blockPtr->offset, 0, blockPtr->size);
 
             if (blockPtr->type == "int") {
