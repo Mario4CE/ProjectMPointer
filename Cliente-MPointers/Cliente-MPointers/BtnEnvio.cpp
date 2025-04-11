@@ -52,22 +52,22 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
             }
             else if (tipo == "double") {
                 mptrDouble = new MPointer<double>(MPointer<double>::New(valor));
-                *mptrDouble = static_cast<double>(valor);
+                //*mptrDouble = static_cast<double>(valor);
                 respuesta = "Nuevo MPointer<double> creado con valor " + std::to_string(valor);
             }
             else if (tipo == "char") {
                 mptrChar = new MPointer<char>(MPointer<char>::New(valor));
-                *mptrChar = static_cast<char>(valor);
+                //*mptrChar = static_cast<char>(valor);
                 respuesta = std::string("Nuevo MPointer<char> creado con valor '") + static_cast<char>(valor) + "'";
             }
             else if (tipo == "string") {
                 mptrStr = new MPointer<std::string>(MPointer<std::string>::New(valor));
-                *mptrStr = std::to_string(valor);
+               // *mptrStr = std::to_string(valor);
                 respuesta = "Nuevo MPointer<string> creado con valor \"" + std::to_string(valor) + "\"";
             }
             else if (tipo == "float") {
                 mptrFloat = new MPointer<float>(MPointer<float>::New(valor));
-                *mptrFloat = static_cast<float>(valor);
+               // *mptrFloat = static_cast<float>(valor);
                 respuesta = "Nuevo MPointer<float> creado con valor " + std::to_string(valor);
             }
             else {
@@ -134,7 +134,7 @@ System::Void ClienteMPointers::Cliente::btnCliente_Click(System::Object^ sender,
                         colorRespuesta = System::Drawing::Color::Red;
                     }
                     else {
-                        respuesta = "Valor del bloque " + idStr + ": " + response;
+                        respuesta = "Valor del bloque mostrado en el server" + idStr + ": " + response;
                         colorRespuesta = System::Drawing::Color::Green;
                     }
                 }

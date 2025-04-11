@@ -1,3 +1,4 @@
+﻿
 
 #ifndef MEMORYMANAGER_H
 #define MEMORYMANAGER_H
@@ -34,14 +35,33 @@ public:
         int id;
         size_t size;
         size_t offset;
-        int refCount;
         std::string type;
+        int refCount;
+        std::vector<std::string> references; // Para almacenar varias referencias
 
-        MemoryBlock() : id(0), size(0), offset(0), refCount(0), type("") {}
-        MemoryBlock(int i, size_t s, size_t o, const std::string& t)
-            : id(i), size(s), offset(o), refCount(1), type(t) {
+        // Constructor predeterminado
+        MemoryBlock() : id(0), size(0), offset(0), type(""), refCount(0) {}
+
+        // Constructor con parámetros
+        MemoryBlock(int id, size_t size, size_t offset, const std::string& type)
+            : id(id), size(size), offset(offset), type(type), refCount(0) {
+        }
+
+        // Método para agregar una referencia
+        void addReference(const std::string& ref) {
+            references.push_back(ref); // Agregar la referencia al vector
+            refCount++; // Actualizar el contador de referencias
+        }
+
+        // Método para actualizar una referencia existente (si es necesario)
+        void updateReference(int index, const std::string& newRef) {
+            if (index >= 0 && index < references.size()) {
+                references[index] = newRef; // Actualiza la referencia en el índice especificado
+            }
         }
     };
+
+
 
     static inline constexpr size_t TOTAL_MEMORY = 1024 * 1024 * 1024; // 1GB total de memoria para el pool
 
@@ -58,6 +78,8 @@ public:
     static std::string processRequest(const std::string& request); //Metodo para procesar la peticion
     static void initialize(); //Metodo para inicializar la memoria
     static std::vector<std::string> getMemoryState(); //Metodo para obtener el estado de la memoria
+    static void cleanup();
+    static void startCleanupTask();
 
 public:
     SOCKET clientSocket;
@@ -76,14 +98,14 @@ private:
     static std::string handleGet(int id); //Metodo Get
     static std::string handleIncreaseRefCount(int id); //Metodo IncreaseRefCount
     static std::string handleDecreaseRefCount(int id); //Metodo DecreaseRefCount
-    static bool validateSizeForType(const std::string& type, size_t size); //Metodo para validar el tama�o del tipo
+    static bool validateSizeForType(const std::string& type, size_t size); //Metodo para validar el tama�o del tipo
     static bool allocateMemory(size_t size, MemoryBlock& block); //Metodo para asignar memoria
     static void releaseMemory(int id); //Metodo para liberar memoria
     static MemoryBlock* findBlock(int id); //Metodo para encontrar un bloque
     static bool validateDataType(const std::string& blockType, const std::string& value, size_t expectedSize);
     //Metodo para validar el tipo de dato
     static std::string validateBlockSize(const std::string& size, const std::string& type, size_t& blockSize);
-    //Metodo para validar el tama�o del bloque
+    //Metodo para validar el tama�o del bloque
     static void updateUIWithBlockInfo(const MemoryBlock& newBlock); //Metodo para actualizar la UI con la informacion del bloque
     static void sendBlockCreationMessage(const MemoryBlock& newBlock); //Metodo para enviar un mensaje al cliente con la informacion del bloque
     static MemoryBlock createMemoryBlock(size_t blockSize, const std::string& type); //Metodo para crear un bloque de memoria

@@ -60,12 +60,6 @@ public:
     MPointer(int id) : id(id) {}
 
     // Destructor
-    ~MPointer() {
-        if (id != -1) {
-            // Notificar al Memory Manager que se destruy? una referencia
-            this->sendRequest("DecreaseRefCount " + std::to_string(id));
-        }
-    }
 
     // Inicializacion estatica
     static void Init(const std::string& address, int port) {
@@ -74,55 +68,73 @@ public:
     }
 
     // Creacion de nuevo MPointer
-static MPointer<T> New(int valor, int timeoutMs = 5000) {
-    MPointer<T> temp;
-    std::string response;
+    static MPointer<T> New(int valor, int timeoutMs = 5000) {
+        MPointer<T> temp;
+        std::string response;
+        const int maxRetries = 4; // Número máximo de reintentos
+        int attempt = 0;
+        bool success = false;
 
-    try {
-        InfoLogger::logInfo("Solicitando nuevo bloque para tipo " + std::string(typeid(T).name()));
+        while (attempt < maxRetries && !success) {
+            attempt++;
+            try {
+                InfoLogger::logInfo("Intento #" + std::to_string(attempt) +
+                    ": Solicitando nuevo bloque para tipo " +
+                    std::string(typeid(T).name()));
 
-        // Incluye el valor en la petición al servidor
-        response = temp.sendRequest("Create " + std::string(std::to_string(valor) + " " + typeid(T).name()), timeoutMs);
+                // Incluye el valor en la petición al servidor
+                response = temp.sendRequest("Create " + std::string(std::to_string(valor) + " " + typeid(T).name()), timeoutMs);
 
-        InfoLogger::logInfo("Respuesta recibida en New: >" + response + "<");
+                InfoLogger::logInfo("Respuesta recibida en New (intento #" + std::to_string(attempt) + "): >" + response + "<");
 
-        if (response.empty() || response == "Error") {
-            throw std::runtime_error("Respuesta inválida del servidor: " + response);
+                if (response.empty() || response == "Error") {
+                    throw std::runtime_error("Respuesta inválida del servidor: " + response);
+                }
+
+                // Si llegamos aquí, la respuesta fue válida
+                success = true;
+            }
+            catch (const std::exception& e) {
+                ErrorLogger::logError("Excepción en intento #" + std::to_string(attempt) +
+                    " al crear MPointer: " + std::string(e.what()));
+
+                if (attempt >= maxRetries) {
+                    // Si es el último intento, relanzamos la excepción
+                    throw std::runtime_error("Fallo después de " + std::to_string(maxRetries) +
+                        " intentos: " + std::string(e.what()));
+                }
+
+                // Pequeña espera antes del reintento
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            }
         }
-    }
-    catch (const std::exception& e) {
-        ErrorLogger::logError("Excepción al crear MPointer: " + std::string(e.what()));
-        throw;
-    }
 
-    // Limpiar: conservar solo los dígitos
-    std::string cleanResponse;
-    for (char c : response) {
-        if (std::isdigit(static_cast<unsigned char>(c))) {
-            cleanResponse += c;
+        // Limpiar: conservar solo los dígitos
+        std::string cleanResponse;
+        for (char c : response) {
+            if (std::isdigit(static_cast<unsigned char>(c))) {
+                cleanResponse += c;
+            }
         }
+
+        if (cleanResponse.empty()) {
+            throw std::runtime_error("La respuesta del servidor no contiene un número válido: " + response);
+        }
+
+        // Convertir respuesta a ID
+        int newId;
+        try {
+            newId = std::stoi(cleanResponse);
+        }
+        catch (const std::exception& e) {
+            ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
+            throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
+        }
+
+        InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
+        temp.id = newId;
+        return temp;
     }
-
-    if (cleanResponse.empty()) {
-        throw std::runtime_error("La respuesta del servidor no contiene un número válido: " + response);
-    }
-
-    // Convertir respuesta a ID
-    int newId;
-    try {
-        newId = std::stoi(cleanResponse);
-    }
-    catch (const std::exception& e) {
-        ErrorLogger::logError("Excepción al convertir respuesta a ID: " + std::string(e.what()));
-        throw std::runtime_error("Respuesta inválida del servidor al crear un nuevo bloque: " + response);
-    }
-
-    InfoLogger::logInfo("Nuevo bloque creado con ID: " + std::to_string(newId));
-    temp.id = newId;
-    return temp;
-}
-
-
 
     // Operador de dereferencia
     T operator*() {
